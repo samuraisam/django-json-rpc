@@ -1,0 +1,16 @@
+A basic JSON-RPC Implementation for your Django-powered sites.
+  
+  ### myproj/myapp/views.py
+  
+  from jsonrpc.site import jsonrpc_method
+  
+  @jsonrpc_method('myapp.sayHello')
+  def whats_the_time(request, name='Lester'):
+    return "Hello %s" % name
+  
+  ### myproj/urls.py
+  
+  from jsonrpc.site import jsonrpc_site
+  import myproj.myapp.views # you must import the views that need connected
+  
+  urls += patterns('', (r'^json/', jsonrpc_site.dispatch))
