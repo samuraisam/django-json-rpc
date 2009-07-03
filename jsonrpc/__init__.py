@@ -1,0 +1,1 @@
+from site import jsonrpc_method
