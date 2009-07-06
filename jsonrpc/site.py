@@ -16,6 +16,7 @@ class JSONRPCSite(object):
     return [(r'^json/%s/' % k, v) for k, v in self.urls.iteritems()]
   
   def register(self, name, method):
+    print name, method
     self.urls[unicode(name)] = method
   
   def dispatch(self, request):
@@ -25,12 +26,14 @@ class JSONRPCSite(object):
         raise Exception('JSON-RPC: requests most be POST')
       try:
         D = json.loads(request.raw_post_data)
+        print D, self.urls
       except:
         raise Exception('JSON-RPC: request poorly formed JSON')
       if 'method' not in D or 'params' not in D:
         raise Exception('JSON-RPC: request requires str:"method" and list:"params"')
       if D['method'] not in self.urls:
-        raise Exception('JSON-RPC: method not found')
+        raise Exception('JSON-RPC: method not found. Available methods: %s' % (
+                        '\n'.join(self.urls.keys())))
       
       R = self.urls[str(D['method'])](request, *list(D['params']))
       
@@ -39,6 +42,7 @@ class JSONRPCSite(object):
         "Return type not supported"
       
       response['result'] = R
+      response['id'] = D['id'] if 'id' in D else None
       
     except KeyboardInterrupt:
       raise
@@ -54,10 +58,3 @@ class JSONRPCSite(object):
 
 
 jsonrpc_site = JSONRPCSite()
-
-def jsonrpc_method(name):
-  def decorator(func):
-    func.json_method = name
-    jsonrpc_site.register(name, func)
-    return func
-  return decorator

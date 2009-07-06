@@ -17,9 +17,9 @@ setup(
   classifiers = [
     'Development Status :: 4 - Beta',
     'Environment :: Web Environment',
-    'Intented Audience :: Developers',
+    'Intended Audience :: Developers',
     'License :: OSI Approved :: MIT License',
-    'Operating System :: OS Independant',
+    'Operating System :: OS Independent',
     'Programming Language :: Python',
     'Topic :: Software Development :: Libraries :: Python Modules'],
   packages=['jsonrpc'])
