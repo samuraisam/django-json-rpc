@@ -1,7 +1,7 @@
-import sys
-import traceback
 from types import NoneType
 from django.http import HttpResponse
+from jsonrpc.exceptions import *
+
 try:
   import json
 except (ImportError, NameError):
@@ -23,16 +23,16 @@ class JSONRPCSite(object):
     response = {'error': None, 'result': None}
     try:
       if not request.method.lower() == 'post':
-        raise Exception('JSON-RPC: requests most be POST')
+        raise RequestPostError
       try:
         D = json.loads(request.raw_post_data)
         print D, self.urls
       except:
-        raise Exception('JSON-RPC: request poorly formed JSON')
+        raise InvalidRequestError
       if 'method' not in D or 'params' not in D:
-        raise Exception('JSON-RPC: request requires str:"method" and list:"params"')
+        raise InvalidParamsError('Request requires str:"method" and list:"params"')
       if D['method'] not in self.urls:
-        raise Exception('JSON-RPC: method not found. Available methods: %s' % (
+        raise MethodNotFoundError('Method not found. Available methods: %s' % (
                         '\n'.join(self.urls.keys())))
       
       R = self.urls[str(D['method'])](request, *list(D['params']))
@@ -44,17 +44,35 @@ class JSONRPCSite(object):
       response['result'] = R
       response['id'] = D['id'] if 'id' in D else None
       
+      status = 200
+      
     except KeyboardInterrupt:
       raise
+    except Error, e:
+      response['error'] = e.json_rpc_format
+      status = e.status    
     except Exception, e:
-      error = {
-        'name': str(e.__class__.__name__), #str(sys.exc_info()[0]),
-        'message': str(e),
-        'stack': traceback.format_exc(),
-        'executable': sys.executable}
-      response['error'] = error
+      # exception missed by others
+      other_error = OtherError(e)
+      response['error'] = other_error.json_rpc_format
+      status = other_error.status    
       
-    return HttpResponse(json.dumps(response), content_type='application/javascript')
+    from django.core.serializers.json import DjangoJSONEncoder
+    
+    try:
+        # in case we do something json doesn't like, we always get back valid json-rpc response
+        json_rpc = json.dumps(response,cls=DjangoJSONEncoder)
+    except Exception, e:
+      # exception missed by others
+      other_error = OtherError(e)
+      response['result'] = None
+      response['error'] = other_error.json_rpc_format
+      status = other_error.status    
+      
+      json_rpc = json.dumps(response,cls=DjangoJSONEncoder)
+      
+    
+    return HttpResponse(json_rpc, status=status,content_type='application/json-rpc')
 
 
 jsonrpc_site = JSONRPCSite()
