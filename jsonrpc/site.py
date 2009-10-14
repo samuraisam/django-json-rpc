@@ -16,7 +16,6 @@ class JSONRPCSite(object):
     return [(r'^json/%s/' % k, v) for k, v in self.urls.iteritems()]
   
   def register(self, name, method):
-    print name, method
     self.urls[unicode(name)] = method
   
   def dispatch(self, request):
@@ -26,7 +25,6 @@ class JSONRPCSite(object):
         raise RequestPostError
       try:
         D = json.loads(request.raw_post_data)
-        print D, self.urls
       except:
         raise InvalidRequestError
       if 'method' not in D or 'params' not in D:
