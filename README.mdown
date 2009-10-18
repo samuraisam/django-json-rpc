@@ -1,0 +1,48 @@
+Django JSON-RPC
+===============
+
+A basic JSON-RPC Implementation for your Django-powered sites.
+
+Features:
+  * Simple, pythonic API
+  * Support for Django authentication
+  * Mostly supports JSON-RPC 1.1 and 2.0 Spec
+  * Proxy to test your JSON Service
+
+The basic API:
+
+myproj/myapp/views.py
+    
+    from jsonrpc import jsonrpc_method
+    
+    @jsonrpc_method('myapp.sayHello')
+    def whats_the_time(request, name='Lester'):
+      return "Hello %s" % name
+    
+    @jsonrpc_method('myapp.gimmeThat', authenticated=True)
+    def something_special(request, secret_data):
+      return {'sauce': ['authenticated', 'sauce']}
+    
+    
+myproj/urls.py
+    
+    from jsonrpc import jsonrpc_site
+    import myproj.myapp.views # you must import the views that need connected
+    
+    urls += patterns('', (r'^json/', jsonrpc_site.dispatch))
+
+
+To test your service:
+  
+    >>> from jsonrpc.proxy import ServiceProxy
+    
+    >>> s = ServiceProxy('http://localhost:8080/json/')
+    
+    >>> s.myapp.sayHello('Sam')
+    {u'error': None, u'id': u'jsonrpc', u'result': u'Hello Sam'}
+    
+    >>> s.myapp.gimmeThat('username', 'password', 'test data')
+    {u'error': None, u'id': u'jsonrpc', u'result': {u'sauce': [u'authenticated', u'sauce']}}
+
+
+We add the `jsonrpc_version` variable to the request object. It be either '1.0' or '2.0'.
