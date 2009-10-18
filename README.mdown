@@ -53,7 +53,7 @@ The basic API:
 We add the `jsonrpc_version` variable to the request object. It be either '1.0', '1.1' or '2.0'. Arg.
 
 ### The `jsonrpc.jsonrpc_method` decorator
-`jsonrpc.jsonrpc_method(name, authenticated=False, safe=False)
+`jsonrpc.jsonrpc_method(name, authenticated=False, safe=False)`
 <ul>
 <li>
 `name`
