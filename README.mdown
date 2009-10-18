@@ -31,7 +31,10 @@ The basic API:
     from jsonrpc import jsonrpc_site
     import myproj.myapp.views # you must import the views that need connected
     
-    urls += patterns('', (r'^json/', jsonrpc_site.dispatch))
+    urlpatterns += patterns('', 
+      (r'^json/', jsonrpc_site.dispatch),
+      (r'^json/(?P<method>[a-zA-Z0-9.]+)$', jsonrpc_site.dispatch) # for HTTP GET only, omissible
+    )
 
 
 **To test your service:**
@@ -47,4 +50,26 @@ The basic API:
     {u'error': None, u'id': u'jsonrpc', u'result': {u'sauce': [u'authenticated', u'sauce']}}
 
 
-We add the `jsonrpc_version` variable to the request object. It be either '1.0' or '2.0'. Arg.
+We add the `jsonrpc_version` variable to the request object. It be either '1.0', '1.1' or '2.0'. Arg.
+
+### The `jsonrpc.jsonrpc_method` decorator
+`jsonrpc.jsonrpc_method(name, authenticated=False, safe=False)
+<ul>
+<li>
+`name`
+
+The name of your method. IE: `namespace.methodName`
+</li>
+<li>
+`authenticated=False`
+  
+Adds `username` and `password` arguments to the beginning of your method if the user hasn't already been authenticated. These will be used to authenticate the user against `django.contrib.authenticate` If you use HTTP auth or other authentication middleware, `username` and `password` will not be added, and this method will only check against `request.user.is_authenticated`.
+  
+You may pass a callablle to replace `django.contrib.auth.authenticate` as the authentication method. It must return either a User or `None` and take the keyword arguments `username` and `password`.
+</li>
+<li>
+`safe=False`
+
+Designates whether or not your method may be accessed by HTTP GET. By default this is turned off.
+</li>
+</ul>

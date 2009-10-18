@@ -6,7 +6,10 @@ from jsonrpc.exceptions import *
 def jsonrpc_method(name, authenticated=False, safe=False):
   def decorator(func):
     if authenticated:
-      from django.contrib.auth import authenticate
+      if authenticated is True:
+        from django.contrib.auth import authenticate
+      else:
+        authenticate = authenticated
       @wraps(func)
       def _func(request, *args, **kwargs):
         user = getattr(request, 'user', None)

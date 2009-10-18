@@ -48,8 +48,12 @@ def strangeEcho(request, string, omg, wtf, nowai, yeswai='Default'):
   return [string, omg, wtf, nowai, yeswai]
 
 @jsonrpc_method('jsonrpc.safeEcho', safe=True)
-def safeEcho(self, string):
+def safeEcho(request, string):
   return string
+
+@jsonrpc_method('jsonrpc.strangeSafeEcho', safe=True)
+def strangeSafeEcho(request, *args, **kwargs):
+  return strangeEcho(request, *args, **kwargs)
 
 
 class JSONRPCTest(unittest.TestCase):
@@ -102,6 +106,20 @@ class JSONRPCTest(unittest.TestCase):
   
   def test_11_GET_unsafe(self):
     pass
+  
+  def test_11_GET_mixed_args(self):
+    params = {u'1': u'this is a string', u'2': u'this is omg', 
+              u'wtf': u'pants', u'nowai': 'nopants'}
+    url = "%s%s?%s" % (
+      self.host, 'jsonrpc.strangeSafeEcho',
+      (''.join(['%s=%s&' % (k, urllib.quote(v)) for k, v in params.iteritems()])).rstrip('&')
+    )
+    print url
+    resp = json.loads(urllib.urlopen(url).read())
+    self.assertEquals(resp[u'result'][-1], u'Default')
+    self.assertEquals(resp[u'result'][1], u'this is omg')
+    self.assertEquals(resp[u'result'][0], u'this is a string')
+    self.assert_(u'error' not in resp)
   
   def test_11_service_description(self):
     pass
