@@ -47,6 +47,10 @@ def fails(request, string):
 def strangeEcho(request, string, omg, wtf, nowai, yeswai='Default'):
   return [string, omg, wtf, nowai, yeswai]
 
+@jsonrpc_method('jsonrpc.safeEcho', safe=True)
+def safeEcho(self, string):
+  return string
+
 
 class JSONRPCTest(unittest.TestCase):
   def setUp(self):
@@ -94,6 +98,9 @@ class JSONRPCTest(unittest.TestCase):
     self.assert_(u'error' not in resp)
   
   def test_11_GET(self):
+    pass
+  
+  def test_11_GET_unsafe(self):
     pass
   
   def test_11_service_description(self):

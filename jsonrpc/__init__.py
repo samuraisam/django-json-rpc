@@ -3,9 +3,8 @@ from jsonrpc.site import jsonrpc_site
 from jsonrpc.exceptions import *
 
 
-def jsonrpc_method(name, authenticated=False):
+def jsonrpc_method(name, authenticated=False, safe=False):
   def decorator(func):
-    func.json_method = name
     if authenticated:
       from django.contrib.auth import authenticate
       @wraps(func)
@@ -37,6 +36,8 @@ def jsonrpc_method(name, authenticated=False):
           return func(request, *args, **kwargs)
     else:
       _func = func
+    _func.json_method = name
+    _func.json_safe = safe
     jsonrpc_site.register(name, _func)
     return _func
   return decorator

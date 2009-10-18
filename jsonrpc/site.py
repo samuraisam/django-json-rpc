@@ -48,10 +48,6 @@ class JSONRPCSite(object):
   def __init__(self):
     self.urls = {}
   
-  @property
-  def root(self):
-    return [(r'^json/%s/' % k, v) for k, v in self.urls.iteritems()]
-  
   def register(self, name, method):
     self.urls[unicode(name)] = method
   
@@ -63,8 +59,22 @@ class JSONRPCSite(object):
     if version == '2.0':
       resp['jsonrpc'] = version
     resp.update({'error': None, 'result': None})
-    
     return resp
+  
+  def validate_get(self, request, method):
+    encode_get_params = lambda r: dict([(k, v[0] if len(v) == 1 else v)
+                                         for k, v in r])
+    if request.method == 'GET':
+      method = unicode(method)
+      if method in self.urls and getattr(self.urls[method], 'json_safe', False):
+        D = {
+          'params': encode_get_params(request.GET.lists()),
+          'method': method,
+          'id': 'jsonrpc',
+          'version': '1.1'
+        }
+        return True, D
+    return False, {}
   
   def response_dict(self, request, D, is_batch=False, version_hint='1.0'):
     version = version_hint
@@ -124,27 +134,38 @@ class JSONRPCSite(object):
     
     return response, status
   
-  def dispatch(self, request):
-    if not request.method.lower() == 'post':
-      raise RequestPostError
-    response = self.empty_response()
-    try:
-      D = json.loads(request.raw_post_data)
-    except:
-      raise InvalidRequestError
-    if type(D) is list:
-      response = [self.response_dict(request, d)[0] for d in D]
-      status = 200
-    else:
-      response, status = self.response_dict(request, D)
-      if response is None and not u'id' in D or D[u'id'] is None: # a notification
-        return HttpResponse('', status=status)
-      
+  def dispatch(self, request, method=''):      
     from django.core.serializers.json import DjangoJSONEncoder
     
     try:
-        # in case we do something json doesn't like, we always get back valid json-rpc response
-        json_rpc = json.dumps(response,cls=DjangoJSONEncoder)
+      # in case we do something json doesn't like, we always get back valid json-rpc response
+      response = self.empty_response()
+      if request.method.lower() == 'get':
+        valid, D = self.validate_get(request, method)
+        if not valid:
+          raise InvalidRequestError('The method you are trying to access is '
+                                    'not availble by GET requests')
+      elif not request.method.lower() == 'post':
+        raise RequestPostError
+      else:
+        try:
+          D = json.loads(request.raw_post_data)
+        except:
+          raise InvalidRequestError
+      
+      if type(D) is list:
+        response = [self.response_dict(request, d, is_batch=True)[0] for d in D]
+        status = 200
+      else:
+        response, status = self.response_dict(request, D)
+        if response is None and (not u'id' in D or D[u'id'] is None): # a notification
+          return HttpResponse('', status=status)
+      
+      json_rpc = json.dumps(response, cls=DjangoJSONEncoder)
+    except Error, e:
+      response['error'] = e.json_rpc_format
+      status = e.status
+      json_rpc = json.dumps(response, cls=DjangoJSONEncoder)
     except Exception, e:
       # exception missed by others
       other_error = OtherError(e)
@@ -153,7 +174,6 @@ class JSONRPCSite(object):
       status = other_error.status    
       
       json_rpc = json.dumps(response,cls=DjangoJSONEncoder)
-      
     
     return HttpResponse(json_rpc, status=status, content_type='application/json-rpc')
 
