@@ -13,12 +13,17 @@ class ServiceProxy(object):
       name = "%s.%s" % (self.__service_name, name)
     return ServiceProxy(self.__service_url, name, self.__version)
   
+  def __repr__(self):
+    return {"jsonrpc": self.__version,
+            "method": self.__service_name,
+            'params': (args if args else kwargs),
+            'id': str(uuid.uuid1())}
+  
   def __call__(self, *args, **kwargs):
     r = urllib.urlopen(self.__service_url,
-                                dumps({
-                                  "jsonrpc": self.__version,
-                                  "method": self.__service_name,
-                                  'params': (args if args else kwargs),
-                                  'id': str(uuid.uuid1())})).read()
-    print r
+                        dumps({
+                          "jsonrpc": self.__version,
+                          "method": self.__service_name,
+                          'params': (args if args else kwargs),
+                          'id': str(uuid.uuid1())})).read()
     return loads(r)
