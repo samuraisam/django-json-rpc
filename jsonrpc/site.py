@@ -20,6 +20,10 @@ class JSONRPCSite(object):
   
   def dispatch(self, request):
     response = {'error': None, 'result': None}
+    encode_kw = lambda p: dict([(str(k), v) for k, v in p.iteritems()])
+    apply_version = {'2.0': lambda f, r, p: f(r, **encode_kw(p)) if type(p) is dict else f(r, *p),
+                     '1.0': lambda f, r, p: f(r, *p)}
+    apply = apply_version['1.0']
     try:
       if not request.method.lower() == 'post':
         raise RequestPostError
@@ -33,7 +37,15 @@ class JSONRPCSite(object):
         raise MethodNotFoundError('Method not found. Available methods: %s' % (
                         '\n'.join(self.urls.keys())))
       
-      R = self.urls[str(D['method'])](request, *list(D['params']))
+      if 'jsonrpc' in D:
+        if str(D['jsonrpc']) not in apply_version:
+          raise InvalidRequestError('JSON-RPC version %s not supported.' % D['jsonrpc'])
+        apply = apply_version[D['jsonrpc']]
+        request.jsonrpc_version = str(D['jsonrpc'])
+      else:
+        request.jsonrpc_version = '1.0'
+      
+      R = apply(self.urls[str(D['method'])], request, D['params'])
       
       assert sum(map(lambda e: isinstance(R, e), 
         (dict, str, unicode, int, long, list, set, NoneType, bool))), \
