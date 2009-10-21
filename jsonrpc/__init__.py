@@ -8,6 +8,7 @@ def jsonrpc_method(name, authenticated=False, safe=False):
     if authenticated:
       if authenticated is True:
         from django.contrib.auth import authenticate
+        from django.contrib.auth.models import User
       else:
         authenticate = authenticated
       @wraps(func)
@@ -15,12 +16,12 @@ def jsonrpc_method(name, authenticated=False, safe=False):
         user = getattr(request, 'user', None)
         is_authenticated = getattr(user, 'is_authenticated', lambda: False)
         if ((user is not None 
-              and not callable(is_authenticated) and is_authenticated()) 
+              and callable(is_authenticated) and not is_authenticated()) 
             or user is None):
           user = None
           try:
             creds = args[:2]
-            user = authenticate(username=creds[0],password=creds[1])
+            user = authenticate(username=creds[0], password=creds[1])
             if user is not None:
               args = args[2:]
           except IndexError:
@@ -32,10 +33,9 @@ def jsonrpc_method(name, authenticated=False, safe=False):
             else:
               raise InvalidParamsError('Authenticated methods require at least '
                                        '[username, password] or {username: password:} arguments')
-          else:
-            if user is None:
-              raise InvalidCredentialsError
-            request.user = user
+          if user is None:
+            raise InvalidCredentialsError
+          request.user = user
           return func(request, *args, **kwargs)
     else:
       _func = func

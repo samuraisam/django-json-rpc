@@ -11,11 +11,20 @@ TEST_DEFAULTS = {
   'DEBUG': True,
   'DEBUG_PROPAGATE_EXCEPTIONS': True,
   'DATETIME_FORMAT': 'N j, Y, P',
-  'USE_I18N': False
+  'USE_I18N': False,
+  'INSTALLED_APPS': (
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions'),
+  'DATABASE_ENGINE': 'sqlite3',
+  'DATABASE_NAME': 'test.sqlite3',
+  'AUTHENTICATION_BACKENDS': ('django.contrib.auth.backends.ModelBackend',),
 }
 from django.conf import settings
 settings.configure(**TEST_DEFAULTS)
 
+from django.core import management
+from django.contrib.auth.models import User
 from jsonrpc import jsonrpc_method
 from jsonrpc.proxy import ServiceProxy
 from jsonrpc.site import json
@@ -33,6 +42,10 @@ def json_serve_thread():
 
 @jsonrpc_method('jsonrpc.test')
 def echo(request, string):
+  return string
+
+@jsonrpc_method('jsonrpc.testAuth', authenticated=True)
+def echoAuth(requet, string):
   return string
 
 @jsonrpc_method('jsonrpc.notify')
@@ -60,6 +73,7 @@ class JSONRPCTest(unittest.TestCase):
   def setUp(self):
     self.proc = subprocess.Popen(['python', 
       os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test.py')])
+    time.sleep(.5)
     self.host = 'http://127.0.0.1:8999/json/'
     self.proxy10 = ServiceProxy(self.host, version='1.0')
     self.proxy20 = ServiceProxy(self.host, version='2.0')
@@ -114,7 +128,6 @@ class JSONRPCTest(unittest.TestCase):
       self.host, 'jsonrpc.strangeSafeEcho',
       (''.join(['%s=%s&' % (k, urllib.quote(v)) for k, v in params.iteritems()])).rstrip('&')
     )
-    print url
     resp = json.loads(urllib.urlopen(url).read())
     self.assertEquals(resp[u'result'][-1], u'Default')
     self.assertEquals(resp[u'result'][1], u'this is omg')
@@ -178,7 +191,42 @@ class JSONRPCTest(unittest.TestCase):
         self.assertEquals(D[u'result'], None)
         self.assert_(u'error' in D)
         self.assertEquals(D[u'error'][u'code'], 500)
+  
+  def test_authenticated_ok(self):
+    self.assertEquals(
+      self.proxy10.jsonrpc.testAuth(
+        'sammeh', 'password', u'this is a string')[u'result'],
+      u'this is a string')
+  
+  def test_authenticated_ok_kwargs(self):
+    self.assertEquals(
+      self.proxy20.jsonrpc.testAuth(
+        username='sammeh', password='password', string=u'this is a string')[u'result'],
+      u'this is a string')
+  
+  def test_authenticated_fail_kwargs(self):
+    try:
+      self.proxy20.jsonrpc.testAuth(
+        username='osammeh', password='password', string=u'this is a string')
+    except IOError, e:
+      self.assertEquals(e.args[1], 401)
+    else:
+      self.assert_(False, 'Didnt return status code 401 on unauthorized access')
+  
+  def test_authenticated_fail(self):
+    try:
+      self.proxy10.jsonrpc.testAuth(
+        'osammeh', 'password', u'this is a string')
+    except IOError, e:
+      self.assertEquals(e.args[1], 401)
+    else:
+      self.assert_(False, 'Didnt return status code 401 on unauthorized access')
 
 
 if __name__ == '__main__':
+  management.call_command('syncdb', interactive=False)
+  try:
+    User.objects.create_user(username='sammeh', email='sam@rf.com', password='password').save()
+  except:
+    pass
   json_serve_thread()
