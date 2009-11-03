@@ -1,7 +1,7 @@
 Django JSON-RPC
 ===============
 
-A basic JSON-RPC Implementation for your Django-powered sites.
+A basic JSON-RPC Implementation for your Django-powered sites. See [this blog entry](http://samuraiblog.com/wordpress/2009/11/03/django-and-json-rpc/) for more information.
 
 Features:
 <ul>
