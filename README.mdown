@@ -9,6 +9,8 @@ Features:
   <li>Support for Django authentication</li>
   <li>Mostly supports JSON-RPC 1.1 and 2.0 Spec</li>
   <li>Proxy to test your JSON Service</li>
+  <li>Graphical JSON-RPC browser and web console</li>
+  <li>Provides <code>system.describe</code></li>
 </ul>
 
 The basic API:
@@ -27,18 +29,22 @@ The basic API:
     
     
 **myproj/urls.py**
-    
+
+    from django.conf.urls.defaults import *
     from jsonrpc import jsonrpc_site
     import myproj.myapp.views # you must import the views that need connected
     
     urlpatterns += patterns('', 
-      (r'^json/', jsonrpc_site.dispatch),
-      (r'^json/(?P<method>[a-zA-Z0-9.]+)$', jsonrpc_site.dispatch) # for HTTP GET only, omissible
+      url(r'^json/', jsonrpc_site.dispatch, name="jsonrpc_mountpoint"),
+      url(r'^json/browse/', 'jsonrpc.views.browse', name="jsonrpc_browse"), # for the graphical browser/web console only, omissible
+      (r'^json/(?P<method>[a-zA-Z0-9.]+)$', jsonrpc_site.dispatch) # for HTTP GET only, also omissible
     )
 
 
 **To test your service:**
-  
+You can test your service using the provided graphical browser and console,
+available at http://YOUR_URL/json/browse/ (if using the url patterns from above) or with the included ServiceProxy:
+
     >>> from jsonrpc.proxy import ServiceProxy
     
     >>> s = ServiceProxy('http://localhost:8080/json/')

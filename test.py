@@ -3,7 +3,6 @@ import sys
 import unittest
 import subprocess
 import time
-import json
 import urllib
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 TEST_DEFAULTS = {
@@ -13,12 +12,17 @@ TEST_DEFAULTS = {
   'DATETIME_FORMAT': 'N j, Y, P',
   'USE_I18N': False,
   'INSTALLED_APPS': (
+    'jsonrpc',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions'),
   'DATABASE_ENGINE': 'sqlite3',
   'DATABASE_NAME': 'test.sqlite3',
   'AUTHENTICATION_BACKENDS': ('django.contrib.auth.backends.ModelBackend',),
+  'TEMPLATE_LOADERS': (
+      'django.template.loaders.filesystem.load_template_source',
+      'django.template.loaders.app_directories.load_template_source'),
+  # 'TEMPLATE_DIRS': (os.path.join(os.path.dirname(os.path.abspath(__file__)), 'jsonrpc', 'templates'),)
 }
 from django.conf import settings
 settings.configure(**TEST_DEFAULTS)
@@ -42,6 +46,7 @@ def json_serve_thread():
 
 @jsonrpc_method('jsonrpc.test')
 def echo(request, string):
+  """Returns whatever you give it."""
   return string
 
 @jsonrpc_method('jsonrpc.testAuth', authenticated=True)

@@ -1,6 +1,12 @@
 import urllib
 import uuid
-from json import dumps, loads
+try:
+  import json
+except (ImportError, NameError):
+  from django.utils import simplejson as json
+
+loads = json.loads
+dumps = json.dumps
         
 class ServiceProxy(object):
   def __init__(self, service_url, service_name=None, version='1.0'):

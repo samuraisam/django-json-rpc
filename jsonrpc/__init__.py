@@ -1,3 +1,4 @@
+from inspect import getargspec
 from functools import wraps
 from jsonrpc.site import jsonrpc_site
 from jsonrpc.exceptions import *
@@ -5,8 +6,10 @@ from jsonrpc.exceptions import *
 
 def jsonrpc_method(name, authenticated=False, safe=False):
   def decorator(func):
+    arg_names = getargspec(func)[0][1:]
     if authenticated:
       if authenticated is True:
+        arg_names = ['username', 'password'] + arg_names # TODO: this is an assumption
         from django.contrib.auth import authenticate
         from django.contrib.auth.models import User
       else:
@@ -39,6 +42,9 @@ def jsonrpc_method(name, authenticated=False, safe=False):
           return func(request, *args, **kwargs)
     else:
       _func = func
+    _func.json_args = arg_names
+    _func.json_arg_types = ['any'] * len(arg_names)
+    _func.json_return_type = 'any'
     _func.json_method = name
     _func.json_safe = safe
     jsonrpc_site.register(name, _func)

@@ -1,3 +1,4 @@
+from uuid import uuid1
 from types import NoneType
 from django.http import HttpResponse
 from jsonrpc.exceptions import *
@@ -47,9 +48,13 @@ def encode_arg11(p):
 class JSONRPCSite(object):
   def __init__(self):
     self.urls = {}
+    self.register('system.describe', self.describe)
   
   def register(self, name, method):
     self.urls[unicode(name)] = method
+    self.uuid = str(uuid1())
+    self.version = '1.0'
+    self.name = 'django-json-rpc'
   
   def empty_response(self, version='1.0'):
     resp = {'id': None}
@@ -176,6 +181,29 @@ class JSONRPCSite(object):
       json_rpc = json.dumps(response,cls=DjangoJSONEncoder)
     
     return HttpResponse(json_rpc, status=status, content_type='application/json-rpc')
+  
+  def procedure_desc(self, key):
+    M = self.urls[key]
+    return {
+      'name': M.json_method,
+      'summary': M.__doc__,
+      'idempotent': M.json_safe,
+      'params': M.json_args,
+      'return': {'type': M.json_return_type}}
+  
+  def service_desc(self):
+    return {
+      'sdversion': '1.0',
+      'name': self.name,
+      'id': 'urn:uuid:%s' % str(self.uuid),
+      'summary': self.__doc__,
+      'version': self.version,
+      'procs': [self.procedure_desc(k) 
+        for k in self.urls.iterkeys()
+          if self.urls[k] != self.describe]}
+  
+  def describe(self, request):
+    return self.service_desc()
 
 
 jsonrpc_site = JSONRPCSite()
