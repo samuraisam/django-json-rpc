@@ -4,7 +4,7 @@ import unittest
 import subprocess
 import time
 import urllib
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 TEST_DEFAULTS = {
   'ROOT_URLCONF': 'jsontesturls',
   'DEBUG': True,

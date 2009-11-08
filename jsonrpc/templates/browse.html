@@ -1,9 +1,9 @@
 <html>
   <head>
     <title>JSON-RPC Browser</title>
-    <script type="text/javascript" src="http://logjamm.in/ff/MochiKit.js"></script>
-    <script type="text/javascript" src="http://logjamm.in/ff/interpreter.js"></script>
-    <script type="text/javascript">
+    <script type="application/x-javascript" src="{% url jsonrpc_browser %}?f=mochikit.js"></script>
+    <script type="application/x-javascript" src="{% url jsonrpc_browser %}?f=interpreter.js"></script>
+    <script type="application/x-javascript">
     METHOD_NAMES = {{method_names_str|safe}};
     
     function nextSibling(E) {
@@ -170,25 +170,38 @@
           writeln('Got ->');
           writeln(SPAN({'class': 'json_req'}, req.responseText));
           req = evalJSONRequest(req);
-          window.json_response = req;
+          window.json_result = req;
           window.json_error = null;
           return req;
         });
         d.addErrback(function (err) {
-          window.json_response = null;
+          writeln('Error ->');
+          req_err = err;
+          try {
+            err = evalJSONRequest(err.req);
+            if (!err)
+              throw('');
+          } catch (e) { err = req_err; }
+          writeln(SPAN({'class': 'json_req'}, 'STATUS: ' + req_err.number),
+                  BR(), 
+                  SPAN({'class': 'json_req'}, repr(err)));
+          window.json_result = null;
           window.json_error = err;
           return err;
         })
         return d;
       }
     }
-    
+    // init method accordion
     addLoadEvent(
       function() {
         new Accordion('method_accordion');
       });
+    // bind jsonrpc methods under window.jsonrpc
     addLoadEvent(
       function() {
+        window.json_result = null;
+        window.json_error = null;
         forEach(METHOD_NAMES,
           function(method) {
             var part = 'jsonrpc';
@@ -316,11 +329,17 @@
       }*/
       div.collapsable table {
         font-size: 12px;
+        margin-left: 6px;
       }
       div.collapsable th { text-align: left; padding: 0px; margin: 0px; }
       div.collapsable td { font-family: Monaco, "lucida console", Courier; padding: 0px; margin: 0px; }
       
       span.json_req { color: #d04e00; display: inline-block; margin: 0; padding: 0 0 0 5px; }
+      
+      ul.interpreter_help { padding: 0 0 0 20px; margin: 0; font-size: 12px; }
+      ul.interpreter_help li {padding: 0; margin: 0; }
+      div.footer { margin-top: 10px; margin-bottom: 10px; font-size: 11px; color: white; text-align: center; }
+      div.footer a, div.footer a:visited, div.footer a:hover, div.footer a:active { color: #9affab; }
     </style>
   </head>
   <body>
@@ -334,7 +353,7 @@
           <table>
             <tr><th>signature</th><td>{{method.name}}({{method.params|join:", "}})</td></tr>
             <tr><th>arguments</th><td>{{method.params|join:", "}}</td></tr>
-            <tr><th>returns</th><td>{{method.return.type.0}}</td></tr>
+            <tr><th>returns</th><td>{{method.return.type}}</td></tr>
             <tr><th>idempotent</th><td>{{method.idempotent}}</td></tr>
             <tr><th>summary</th><td>{{method.summary}}</td></tr>
           </table>
@@ -354,6 +373,15 @@
           <br /> 
         </div> 
       </form>
+      <ul class="interpreter_help">
+        <li>JSON-RPC methods are exposed through the <strong><code>jsonrpc</code></strong> global.</li>
+        <li>Call a method just as you would a javascript one: <code>jsonrpc.jsonrpc.test('arg1')</code></li>
+        <li>Calling a method returns a Deferred (see the <a href="http://www.mochikit.com/doc/html/MochiKit/Async.html">MochiKit docs</a>). 
+          As soon as the deferred returns the result is available by the global variables <strong><code>json_result</code></strong> or <strong><code>json_error</code></strong></li>
+        <li>Use <code>dir</code> to explore the namespace: <code>dir(jsonrpc)</code></li>
+      </ul>
     </div>
+    <div class="footer">Powered by <a href="http://djangoproject.com/">Django</a>, 
+      <a href="http://github.com/samuraisam/django-json-rpc">django-json-rpc</a> and <a href="http://mochikit.com/">MochiKit</a>
   </body>
 </html>
