@@ -1,12 +1,8 @@
 from uuid import uuid1
 from types import NoneType
 from django.http import HttpResponse
+from jsonrpc._json import loads, dumps
 from jsonrpc.exceptions import *
-
-try:
-  import json
-except (ImportError, NameError):
-  from django.utils import simplejson as json
 
 
 encode_kw = lambda p: dict([(str(k), v) for k, v in p.iteritems()])
@@ -154,7 +150,7 @@ class JSONRPCSite(object):
         raise RequestPostError
       else:
         try:
-          D = json.loads(request.raw_post_data)
+          D = loads(request.raw_post_data)
         except:
           raise InvalidRequestError
       
@@ -166,11 +162,11 @@ class JSONRPCSite(object):
         if response is None and (not u'id' in D or D[u'id'] is None): # a notification
           return HttpResponse('', status=status)
       
-      json_rpc = json.dumps(response, cls=DjangoJSONEncoder)
+      json_rpc = dumps(response, cls=DjangoJSONEncoder)
     except Error, e:
       response['error'] = e.json_rpc_format
       status = e.status
-      json_rpc = json.dumps(response, cls=DjangoJSONEncoder)
+      json_rpc = dumps(response, cls=DjangoJSONEncoder)
     except Exception, e:
       # exception missed by others
       other_error = OtherError(e)
@@ -178,7 +174,7 @@ class JSONRPCSite(object):
       response['error'] = other_error.json_rpc_format
       status = other_error.status    
       
-      json_rpc = json.dumps(response,cls=DjangoJSONEncoder)
+      json_rpc = dumps(response,cls=DjangoJSONEncoder)
     
     return HttpResponse(json_rpc, status=status, content_type='application/json-rpc')
   

@@ -31,11 +31,11 @@ from django.core import management
 from django.contrib.auth.models import User
 from jsonrpc import jsonrpc_method
 from jsonrpc.proxy import ServiceProxy
-from jsonrpc.site import json
+from jsonrpc._json import loads, dumps
 
 
 def _call(host, req):
-  return json.loads(urllib.urlopen(host, json.dumps(req)).read())
+  return loads(urllib.urlopen(host, dumps(req)).read())
 
 
 def json_serve_thread():
@@ -133,7 +133,7 @@ class JSONRPCTest(unittest.TestCase):
       self.host, 'jsonrpc.strangeSafeEcho',
       (''.join(['%s=%s&' % (k, urllib.quote(v)) for k, v in params.iteritems()])).rstrip('&')
     )
-    resp = json.loads(urllib.urlopen(url).read())
+    resp = loads(urllib.urlopen(url).read())
     self.assertEquals(resp[u'result'][-1], u'Default')
     self.assertEquals(resp[u'result'][1], u'this is omg')
     self.assertEquals(resp[u'result'][0], u'this is a string')
@@ -159,12 +159,8 @@ class JSONRPCTest(unittest.TestCase):
       u'params': [u'this is a string'], 
       u'id': None
     }
-    resp = None
-    try:
-      resp = json.loads(urllib.urlopen(self.host, json.dumps(req)).read())
-    except ValueError:
-      pass
-    self.assert_(resp is None)
+    resp = urllib.urlopen(self.host, dumps(req)).read()
+    self.assertEquals(resp, '')
   
   def test_20_batch(self):
     req = [{
@@ -173,7 +169,7 @@ class JSONRPCTest(unittest.TestCase):
       u'params': [u'this is a string'],
       u'id': u'id-'+unicode(i)
     } for i in range(5)]
-    resp = json.loads(urllib.urlopen(self.host, json.dumps(req)).read())
+    resp = loads(urllib.urlopen(self.host, dumps(req)).read())
     self.assertEquals(len(resp), len(req))
     for i, D in enumerate(resp):
       self.assertEquals(D[u'result'], req[i][u'params'][0])
@@ -186,7 +182,7 @@ class JSONRPCTest(unittest.TestCase):
       u'params': [u'this is a string'],
       u'id': u'id-'+unicode(i)
     } for i in range(10)]
-    resp = json.loads(urllib.urlopen(self.host, json.dumps(req)).read())
+    resp = loads(urllib.urlopen(self.host, dumps(req)).read())
     self.assertEquals(len(resp), len(req))
     for i, D in enumerate(resp):
       if not i % 2:
