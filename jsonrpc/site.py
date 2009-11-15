@@ -1,9 +1,14 @@
+from functools import wraps
 from uuid import uuid1
 from types import NoneType
 from django.http import HttpResponse
 from jsonrpc._json import loads, dumps
 from jsonrpc.exceptions import *
-
+empty_dec = lambda f: f
+try:
+  from django.views.decorators.csrf import csrf_exempt
+except (NameError, ImportError):
+  csrf_exempt = empty_dec
 
 encode_kw = lambda p: dict([(str(k), v) for k, v in p.iteritems()])
 
@@ -135,6 +140,7 @@ class JSONRPCSite(object):
     
     return response, status
   
+  @csrf_exempt
   def dispatch(self, request, method=''):      
     from django.core.serializers.json import DjangoJSONEncoder
     

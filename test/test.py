@@ -18,6 +18,12 @@ TEST_DEFAULTS = {
     'django.contrib.sessions'),
   'DATABASE_ENGINE': 'sqlite3',
   'DATABASE_NAME': 'test.sqlite3',
+  'MIDDLEWARE_CLASSES': (
+      'django.middleware.common.CommonMiddleware',
+      'django.contrib.sessions.middleware.SessionMiddleware',
+      'django.middleware.csrf.CsrfViewMiddleware',
+      'django.contrib.auth.middleware.AuthenticationMiddleware',
+  ),
   'AUTHENTICATION_BACKENDS': ('django.contrib.auth.backends.ModelBackend',),
   'TEMPLATE_LOADERS': (
       'django.template.loaders.filesystem.load_template_source',

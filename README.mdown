@@ -55,6 +55,9 @@ available at http://YOUR_URL/json/browse/ (if using the url patterns from above)
     >>> s.myapp.gimmeThat('username', 'password', 'test data')
     {u'error': None, u'id': u'jsonrpc', u'result': {u'sauce': [u'authenticated', u'sauce']}}
 
+Method Browser:
+
+[![](http://samuraiblog.com/wordpress/wp-content/uploads/2009/11/jsonrpcbrowserscreen.png)](http://samuraiblog.com/wordpress/wp-content/uploads/2009/11/jsonrpcbrowserscreen.png)
 
 We add the `jsonrpc_version` variable to the request object. It be either '1.0', '1.1' or '2.0'. Arg.
 
