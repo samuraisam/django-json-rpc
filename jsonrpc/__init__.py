@@ -40,6 +40,7 @@ def jsonrpc_method(name, authenticated=False, safe=False):
             raise InvalidCredentialsError
           request.user = user
           return func(request, *args, **kwargs)
+        return func(request, *args, **kwargs)
     else:
       _func = func
     _func.json_args = arg_names
