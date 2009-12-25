@@ -4,7 +4,9 @@ import unittest
 import subprocess
 import time
 import urllib
+
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+
 TEST_DEFAULTS = {
   'ROOT_URLCONF': 'jsontesturls',
   'DEBUG': True,
@@ -28,16 +30,18 @@ TEST_DEFAULTS = {
   'TEMPLATE_LOADERS': (
       'django.template.loaders.filesystem.load_template_source',
       'django.template.loaders.app_directories.load_template_source'),
-  # 'TEMPLATE_DIRS': (os.path.join(os.path.dirname(os.path.abspath(__file__)), 'jsonrpc', 'templates'),)
 }
+
 from django.conf import settings
 settings.configure(**TEST_DEFAULTS)
 
 from django.core import management
 from django.contrib.auth.models import User
-from jsonrpc import jsonrpc_method
+from jsonrpc import jsonrpc_method, _parse_sig, Any, SortedDict
 from jsonrpc.proxy import ServiceProxy
 from jsonrpc._json import loads, dumps
+from jsonrpc.site import validate_params
+from jsonrpc.exceptions import *
 
 
 def _call(host, req):
@@ -78,6 +82,77 @@ def safeEcho(request, string):
 @jsonrpc_method('jsonrpc.strangeSafeEcho', safe=True)
 def strangeSafeEcho(request, *args, **kwargs):
   return strangeEcho(request, *args, **kwargs)
+
+@jsonrpc_method('jsonrpc.checkedEcho(string=str, string2=str) -> str', safe=True, validate=True)
+def protectedEcho(request, string, string2):
+  return string + string2
+
+@jsonrpc_method('jsonrpc.checkedArgsEcho(string=str, string2=str)', validate=True)
+def protectedArgsEcho(request, string, string2):
+  return string + string2
+
+@jsonrpc_method('jsonrpc.checkedReturnEcho() -> String', validate=True)
+def protectedReturnEcho(request, string, string2):
+  return string + string2
+
+@jsonrpc_method('jsonrpc.authCheckedEcho(Object, Array) -> Object', validate=True)
+def authCheckedEcho(request, obj1, arr1):
+  return {'obj1': obj1, 'arr1': arr1}
+
+@jsonrpc_method('jsonrpc.varArgs(String, String, str3=String) -> Array', validate=True)
+def checkedVarArgsEcho(request, *args, **kw):
+  return list(args) + kw.values()
+
+
+class JSONRPCFunctionalTests(unittest.TestCase):
+  def test_method_parser(self):
+    working_sigs = [
+      ('jsonrpc', 'jsonrpc', SortedDict(), Any),
+      ('jsonrpc.methodName', 'jsonrpc.methodName', SortedDict(), Any),
+      ('jsonrpc.methodName() -> list', 'jsonrpc.methodName', SortedDict(), list),
+      ('jsonrpc.methodName(str, str, str ) ', 'jsonrpc.methodName', SortedDict([('a', str), ('b', str), ('c', str)]), Any),
+      ('jsonrpc.methodName(str, b=str, c=str)', 'jsonrpc.methodName', SortedDict([('a', str), ('b', str), ('c', str)]), Any),
+      ('jsonrpc.methodName(str, b=str) -> dict', 'jsonrpc.methodName', SortedDict([('a', str), ('b', str)]), dict),
+      ('jsonrpc.methodName(str, str, c=Any) -> Any', 'jsonrpc.methodName', SortedDict([('a', str), ('b', str), ('c', Any)]), Any),
+      ('jsonrpc(Any ) ->  Any', 'jsonrpc', SortedDict([('a', Any)]), Any),
+    ]
+    error_sigs = [
+      ('jsonrpc(str) -> nowai', ValueError),
+      ('jsonrpc(nowai) -> Any', ValueError),
+      ('jsonrpc(nowai=str, str)', ValueError),
+      ('jsonrpc.methodName(nowai*str) -> Any', ValueError)
+    ]
+    for sig in working_sigs:
+      ret = _parse_sig(sig[0], list(iter(sig[2])))
+      self.assertEquals(ret[0], sig[1])
+      self.assertEquals(ret[1], sig[2])
+      self.assertEquals(ret[2], sig[3])
+    for sig in error_sigs:
+      e = None
+      try:
+        _parse_sig(sig[0], ['a'])
+      except Exception, exc:
+        e = exc
+      self.assert_(type(e) is sig[1])
+  
+  def test_validate_args(self):
+    sig = 'jsonrpc(String, String) -> String'
+    M = jsonrpc_method(sig, validate=True)(lambda r, s1, s2: s1+s2)
+    self.assert_(validate_params(M, {'params': ['omg', u'wtf']}) is None)
+    
+    E = None
+    try:
+      validate_params(M, {'params': [['omg'], ['wtf']]})
+    except Exception, e:
+      E = e
+    self.assert_(type(E) is InvalidParamsError)
+  
+  def test_validate_args_any(self):
+    sig = 'jsonrpc(s1=Any, s2=Any)'
+    M = jsonrpc_method(sig, validate=True)(lambda r, s1, s2: s1+s2)
+    self.assert_(validate_params(M, {'params': ['omg', 'wtf']}) is None)
+    self.assert_(validate_params(M, {'params': [['omg'], ['wtf']]}) is None)
+    self.assert_(validate_params(M, {'params': {'s1': 'omg', 's2': 'wtf'}}) is None)
 
 
 class JSONRPCTest(unittest.TestCase):
