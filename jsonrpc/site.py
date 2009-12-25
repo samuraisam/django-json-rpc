@@ -1,15 +1,16 @@
 from functools import wraps
 from uuid import uuid1
-from types import NoneType
 from django.http import HttpResponse
 from jsonrpc._json import loads, dumps
 from jsonrpc.exceptions import *
+from jsonrpc.types import *
 empty_dec = lambda f: f
 try:
   from django.views.decorators.csrf import csrf_exempt
 except (NameError, ImportError):
   csrf_exempt = empty_dec
 
+NoneType = type(None)
 encode_kw = lambda p: dict([(str(k), v) for k, v in p.iteritems()])
 
 def encode_kw11(p):
@@ -45,17 +46,43 @@ def encode_arg11(p):
     pos.sort()
     return [d[str(i)] for i in pos]
 
+def validate_params(method, D):
+  if type(D['params']) == Object:
+    keys = method.json_arg_types.keys()
+    if len(keys) != len(D['params']):
+      raise InvalidParamsError('Not eough params provided for %s' % method.json_sig)
+    for k in keys:
+      if not k in D['params']:
+        raise InvalidParamsError('%s is not a valid parameter for %s' 
+                                 % (k, method.json_sig))
+      if not Any.kind(D['params'][k]) == method.json_arg_types[k]:
+        raise InvalidParamsError('%s is not the correct type %s for %s'
+          % (type(D['params'][k]), method.json_arg_types[k], method.json_sig))
+  elif type(D['params']) == Array:
+    arg_types = method.json_arg_types.values()
+    try:
+      for i, arg in enumerate(D['params']):
+        if not Any.kind(arg) == arg_types[i]:
+          raise InvalidParamsError('%s is not the correct type %s for %s'
+            % (type(arg), arg_types[i], method.json_sig))
+    except IndexError:
+      raise InvalidParamsError('Too many params provided for %s' % method.json_sig)
+    else:
+      if len(D['params']) != len(arg_types):
+        raise InvalidParamsError('Not enouh params provided for %s' % method.json_sig)
+
 
 class JSONRPCSite(object):
+  "A JSON-RPC Site"
   def __init__(self):
     self.urls = {}
+    self.uuid = str(uuid1())
+    self.version = '1.0'
+    self.name = 'django-json-rpc'
     self.register('system.describe', self.describe)
   
   def register(self, name, method):
     self.urls[unicode(name)] = method
-    self.uuid = str(uuid1())
-    self.version = '1.0'
-    self.name = 'django-json-rpc'
   
   def empty_response(self, version='1.0'):
     resp = {'id': None}
@@ -106,8 +133,11 @@ class JSONRPCSite(object):
         version = request.jsonrpc_version = response['version'] = str(D['version'])
       else:
         request.jsonrpc_version = '1.0'
-      
-      R = apply_version[version](self.urls[str(D['method'])], request, D['params'])
+        
+      method = self.urls[str(D['method'])]
+      if getattr(method, 'json_validate', False):
+        validate_params(method, D)
+      R = apply_version[version](method, request, D['params'])
       
       assert sum(map(lambda e: isinstance(R, e), 
         (dict, str, unicode, int, long, list, set, NoneType, bool))), \
@@ -186,11 +216,13 @@ class JSONRPCSite(object):
   
   def procedure_desc(self, key):
     M = self.urls[key]
+    print M.json_arg_types
     return {
       'name': M.json_method,
       'summary': M.__doc__,
       'idempotent': M.json_safe,
-      'params': M.json_args,
+      'params': [{'type': str(Any.kind(t)), 'name': k} 
+        for k, t in M.json_arg_types.iteritems()],
       'return': {'type': M.json_return_type}}
   
   def service_desc(self):
