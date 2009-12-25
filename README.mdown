@@ -7,8 +7,9 @@ Features:
 <ul>
   <li>Simple, pythonic API</li>
   <li>Support for Django authentication</li>
-  <li>Mostly supports JSON-RPC 1.1 and 2.0 Spec</li>
+  <li>Supports JSON-RPC 1.0, 1.1, 1.2 and 2.0 Spec</li>
   <li>Proxy to test your JSON Service</li>
+  <li>Run-time type checking</li>
   <li>Graphical JSON-RPC browser and web console</li>
   <li>Provides <code>system.describe</code></li>
 </ul>
@@ -80,5 +81,16 @@ You may pass a callablle to replace `django.contrib.auth.authenticate` as the au
 `safe=False`
 
 Designates whether or not your method may be accessed by HTTP GET. By default this is turned off.
+</li>
+<li>
+`validate=True`
+
+Validates the arguments passed to your method based on type information provided in the signature. Supply type information by including types in your method declaration. Like so:
+      
+      @jsonrpc_method('myapp.specialSauce(ingedients=list, instructions=string)', validate=True)
+      def special_sauce(self, ingredients, instructions):
+        return SpecialSauce(ingredients, instructions)
+
+Calls to `myapp.specialSauce` will now check each arguments type before calling `special_sauce`, throwing an `InvalidParamsError` when it encounters a discrepancy. This can significantly reduce the amount of code required to write JSON-RPC services.
 </li>
 </ul>
