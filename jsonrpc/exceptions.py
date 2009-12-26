@@ -1,4 +1,8 @@
-from django.utils.translation import gettext as _
+try:
+  from django.utils.translation import gettext as _
+  _("You're lazy...") # this function lazy-loads settings
+except (ImportError, NameError):
+  _ = lambda t, *a, **k: t
 
 class Error(Exception):
   """ Error class based on the JSON-RPC 2.0 specs 

@@ -1,7 +1,6 @@
 from functools import wraps
 from uuid import uuid1
 from types import NoneType
-from django.http import HttpResponse
 from jsonrpc._json import loads, dumps
 from jsonrpc.exceptions import *
 empty_dec = lambda f: f
@@ -142,6 +141,7 @@ class JSONRPCSite(object):
   
   @csrf_exempt
   def dispatch(self, request, method=''):      
+    from django.http import HttpResponse
     from django.core.serializers.json import DjangoJSONEncoder
     
     try:
