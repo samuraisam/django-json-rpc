@@ -12,8 +12,12 @@ class Type(type):
   """A rudimentary extension to `type` that provides polymorphic
   types for run-time type checking of JSON data types. IE:
   
-  assert type(strobj) == String
-  assert type(strobj) == Any
+  assert type(u'') == String
+  assert type('') == String
+  assert type('') == Any
+  assert Any.kind('') == String
+  assert Any.decode('str') == String
+  assert Any.kind({}) == Object
   """
   
   def __init__(self, *args, **kwargs):
@@ -42,8 +46,11 @@ class Type(type):
   def kind(self, t):
     if type(t) is Type:
       return t
+    ty = lambda t: type(t)
+    if type(t) is type:
+      ty = lambda t: t
     return reduce(
-      lambda L, R: R if (hasattr(R, 't') and type(t) == R) else L,
+      lambda L, R: R if (hasattr(R, 't') and ty(t) == R) else L,
       filter(lambda T: T is not Any, 
         _types_gen(self)))
   

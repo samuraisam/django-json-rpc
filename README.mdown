@@ -63,7 +63,7 @@ Method Browser:
 We add the `jsonrpc_version` variable to the request object. It be either '1.0', '1.1' or '2.0'. Arg.
 
 ### The `jsonrpc.jsonrpc_method` decorator
-`jsonrpc.jsonrpc_method(name, authenticated=False, safe=False)`
+`jsonrpc.jsonrpc_method(name, authenticated=False, safe=False, validate=False)`
 <ul>
 <li>
 `name`
@@ -83,14 +83,42 @@ You may pass a callablle to replace `django.contrib.auth.authenticate` as the au
 Designates whether or not your method may be accessed by HTTP GET. By default this is turned off.
 </li>
 <li>
-`validate=True`
+`validate=False`
 
 Validates the arguments passed to your method based on type information provided in the signature. Supply type information by including types in your method declaration. Like so:
       
-      @jsonrpc_method('myapp.specialSauce(ingedients=list, instructions=string)', validate=True)
+      @jsonrpc_method('myapp.specialSauce(Array, String)', validate=True)
       def special_sauce(self, ingredients, instructions):
         return SpecialSauce(ingredients, instructions)
 
 Calls to `myapp.specialSauce` will now check each arguments type before calling `special_sauce`, throwing an `InvalidParamsError` when it encounters a discrepancy. This can significantly reduce the amount of code required to write JSON-RPC services.
 </li>
 </ul>
+
+### Adding type checking to your methods
+When writing web services you often end up manually checking the types of parameters passed. django-json-rpc provides a way to eliminate much of that code by specifying the types in your method signature. As specified in the JSON-RPC spec the available types are `Object Array Number Boolean String Nil ` and `Any` meaning any type.
+
+      @jsonrpc_method('app.addStrings(arg1=String, arg2=String) -> String')
+      def add_strings(request, arg1, arg2):
+        return arg1 + arg2
+
+However contrived this example, a lot of extra information about our function is available. The `system.describe` method will automatically be able to provide more information about the parameters and return type. Provide `validate=True` to the `jsonrpc_method` decorator and you can be guaranteed to receive two string objects when `add_strings` is called.
+
+**Note:** Return type information is used only for reference, return value types are not checked.
+
+Types can be specified a number of ways, the following are all equivalent:
+
+      # using JSON types:
+      @jsonrpc_method('app.findSelection(query=Object, limit=Number)')
+      
+      # using Python types:
+      @jsonrpc_method('app.findSelection(query=dict, limit=int)')
+      
+      # with mixed keyword parameters
+      @jsonrpc_method('app.findSelection(dict, limit=int)')
+      
+      # with no keyword parameters
+      @jsonrpc_method('app.findSelection(dict, int)')
+      
+      # with a return value
+      @jsonrpc_method('app.findSelection(dict, int) -> list')

@@ -340,6 +340,8 @@
       ul.interpreter_help li {padding: 0; margin: 0; }
       div.footer { margin-top: 10px; margin-bottom: 10px; font-size: 11px; color: white; text-align: center; }
       div.footer a, div.footer a:visited, div.footer a:hover, div.footer a:active { color: #9affab; }
+      
+      span.type { color: rgb(96,45,12); font-weight: bold; }
     </style>
   </head>
   <body>
@@ -350,12 +352,19 @@
         {% for method in methods %}
         <h3 class="accordion_toggle">{{method.name}}</h3>
         <div class="accordion_content">
-          <table>
-            <tr><th>signature</th><td>{{method.name}}({{method.params|join:", "}})</td></tr>
-            <tr><th>arguments</th><td>{{method.params|join:", "}}</td></tr>
-            <tr><th>returns</th><td>{{method.return.type}}</td></tr>
+          <table><tbody valign="top">
+            <tr><th>signature</th><td>
+    {{method.name}}({% for param in method.params %}{{param.name}}{% if not forloop.last %}, {% endif %}{% endfor %})</td></tr>
+            <tr><th>arguments</th><td>
+              {% for param in method.params %}
+                {{param.name}} : <span class="type">{{param.type}}</span>
+                {% if not forloop.last %}<br /> {% endif %}
+              {% endfor %}
+            </td></tr>
+            <tr><th>returns</th><td><span class="type">{{method.return.type}}</span></td></tr>
             <tr><th>idempotent</th><td>{{method.idempotent}}</td></tr>
             <tr><th>summary</th><td>{{method.summary}}</td></tr>
+            </tbody>
           </table>
         </div>
         {% endfor %}

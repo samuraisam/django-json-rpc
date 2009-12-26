@@ -42,6 +42,7 @@ from jsonrpc.proxy import ServiceProxy
 from jsonrpc._json import loads, dumps
 from jsonrpc.site import validate_params
 from jsonrpc.exceptions import *
+from jsonrpc.types import *
 
 
 def _call(host, req):
@@ -153,6 +154,18 @@ class JSONRPCFunctionalTests(unittest.TestCase):
     self.assert_(validate_params(M, {'params': ['omg', 'wtf']}) is None)
     self.assert_(validate_params(M, {'params': [['omg'], ['wtf']]}) is None)
     self.assert_(validate_params(M, {'params': {'s1': 'omg', 's2': 'wtf'}}) is None)
+  
+  def test_types(self):
+    assert type(u'') == String
+    assert type('') == String
+    assert not type('') == Object
+    assert not type([]) == Object
+    assert type([]) == Array
+    assert type('') == Any
+    assert Any.kind('') == String
+    assert Any.decode('str') == String
+    assert Any.kind({}) == Object
+    assert Any.kind(None) == Nil
 
 
 class JSONRPCTest(unittest.TestCase):
