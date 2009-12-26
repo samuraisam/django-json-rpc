@@ -87,10 +87,10 @@ Designates whether or not your method may be accessed by HTTP GET. By default th
 
 Validates the arguments passed to your method based on type information provided in the signature. Supply type information by including types in your method declaration. Like so:
       
-      @jsonrpc_method('myapp.specialSauce(ingedients=list, instructions=string)', validate=True)
+      @jsonrpc_method('myapp.specialSauce(ingedients=list, instructions=str)', validate=True)
       def special_sauce(self, ingredients, instructions):
         return SpecialSauce(ingredients, instructions)
 
-Calls to `myapp.specialSauce` will now check each arguments type before calling `special_sauce`, throwing an `InvalidParamsError` when it encounters a discrepancy. This can significantly reduce the amount of code required to write JSON-RPC services.
+Calls to `myapp.specialSauce` will now check each arguments' type before calling `special_sauce`, throwing an `InvalidParamsError` when it encounters a discrepancy. This can significantly reduce the amount of code required to write JSON-RPC services.
 </li>
 </ul>
