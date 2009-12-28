@@ -15,14 +15,23 @@ SIG_RE = re.compile(
 
 
 def _validate_arg(value, expected):
+  "Returns whether or not ``value`` is the ``expected`` type."
   if type(value) == expected:
     return True
   return False
 
-def _validate_args(f, *args, **kwargs):
-  return
-
 def _eval_arg_type(arg_type, T=Any, arg=None, sig=None):
+  """
+  Returns a type from a snippit of python source. Should normally be
+  something just like 'str' or 'Object'.
+  
+    arg_type      the source to be evaluated
+    T             the default type
+    arg           context of where this type was extracted
+    sig           context from where the arg was extracted
+  
+  Returns a type or a Type
+  """
   try:
     T = eval(arg_type)
   except Exception, e:
@@ -35,6 +44,17 @@ def _eval_arg_type(arg_type, T=Any, arg=None, sig=None):
     return T
 
 def _parse_sig(sig, arg_names):
+  """
+  Parses signatures into a ``SortedDict`` of paramName => type.
+  Numerically-indexed arguments that do not correspond to an argument
+  name in python (ie: it takes a variable number of arguments) will be
+  keyed as the stringified version of it's index.
+  
+    sig         the signature to be parsed
+    arg_names   a list of argument names extracted from python source
+  
+  Returns a tuple of (method name, types dict, return type)
+  """
   d = SIG_RE.match(sig)
   if not d:
     raise ValueError('Invalid method signature %s' % sig)
@@ -69,6 +89,16 @@ def _parse_sig(sig, arg_names):
             if d['return_sig'] else Any))
 
 def _inject_args(sig, types):
+  """
+  A function to inject arguments manually into a method signature before
+  it's been parsed. If using keyword arguments use 'kw=type' instead in
+  the types array.
+    
+    sig     the string signature
+    types   a list of types to be inserted
+    
+  Returns the altered signature.
+  """
   if '(' in sig:
     parts = sig.split('(')
     sig = '%s(%s%s%s' % (
