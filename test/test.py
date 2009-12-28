@@ -233,6 +233,13 @@ class JSONRPCTest(unittest.TestCase):
     self.assertEquals(resp[u'result'][0], u'this is a string')
     self.assert_(u'error' not in resp)
   
+  def test_20_checked(self):
+    self.assertEqual(
+      self.proxy10.jsonrpc.varArgs('o', 'm', 'g')[u'result'],
+      ['o', 'm', 'g']
+    )
+    self.assert_(self.proxy10.jsonrpc.varArgs(1,2,3)[u'error'])
+  
   def test_11_service_description(self):
     pass
   

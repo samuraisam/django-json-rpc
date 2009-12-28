@@ -2,7 +2,7 @@ import re
 from inspect import getargspec
 from functools import wraps
 from django.utils.datastructures import SortedDict
-from jsonrpc.site import jsonrpc_site
+from jsonrpc.site import jsonrpc_site as default_site
 from jsonrpc.types import *
 from jsonrpc.exceptions import *
 
@@ -109,14 +109,65 @@ def _inject_args(sig, types):
     sig = '%s(%s)' % (sig, ', '.join(types))
   return sig
 
-def jsonrpc_method(name, authenticated=False, safe=False, validate=False):
+def jsonrpc_method(name, authenticated=False, safe=False, validate=False,
+                   site=default_site):
+  """
+  Wraps a function turns it into a json-rpc method. Adds several attributes
+  to the function speific to the JSON-RPC machinery and adds it to the default
+  jsonrpc_site if one isn't provided. You must import the module containing
+  these functions in your urls.py.
+  
+    name
+        
+        The name of your method. IE: `namespace.methodName` The method name
+        can include type information, like `ns.method(String, Array) -> Nil`.
+
+    authenticated=False   
+
+        Adds `username` and `password` arguments to the beginning of your 
+        method if the user hasn't already been authenticated. These will 
+        be used to authenticate the user against `django.contrib.authenticate` 
+        If you use HTTP auth or other authentication middleware, `username` 
+        and `password` will not be added, and this method will only check 
+        against `request.user.is_authenticated`.
+
+        You may pass a callablle to replace `django.contrib.auth.authenticate`
+        as the authentication method. It must return either a User or `None`
+        and take the keyword arguments `username` and `password`.
+
+    safe=False
+
+        Designates whether or not your method may be accessed by HTTP GET. 
+        By default this is turned off.
+    
+    validate=False
+
+        Validates the arguments passed to your method based on type 
+        information provided in the signature. Supply type information by 
+        including types in your method declaration. Like so:
+
+        @jsonrpc_method('myapp.specialSauce(Array, String)', validate=True)
+        def special_sauce(self, ingredients, instructions):
+          return SpecialSauce(ingredients, instructions)
+
+        Calls to `myapp.specialSauce` will now check each arguments type
+        before calling `special_sauce`, throwing an `InvalidParamsError` 
+        when it encounters a discrepancy. This can significantly reduce the
+        amount of code required to write JSON-RPC services.
+    
+    site=default_site
+        
+        Defines which site the jsonrpc method will be added to. Can be any 
+        object that provides a `register(name, func)` method.
+    
+  """
   def decorator(func):
     arg_names = getargspec(func)[0][1:]
-    X = {'name': name}
+    X = {'name': name, 'arg_names': arg_names}
     if authenticated:
       if authenticated is True:
         # TODO: this is an assumption
-        arg_names = ['username', 'password'] + arg_names 
+        X['arg_names'] = ['username', 'password'] + X['arg_names']
         X['name'] = _inject_args(X['name'], ('String', 'String'))
         from django.contrib.auth import authenticate
         from django.contrib.auth.models import User
@@ -152,14 +203,14 @@ def jsonrpc_method(name, authenticated=False, safe=False, validate=False):
         return func(request, *args, **kwargs)
     else:
       _func = func
-    method, arg_types, return_type = _parse_sig(X['name'], arg_names)
-    _func.json_args = arg_names
+    method, arg_types, return_type = _parse_sig(X['name'], X['arg_names'])
+    _func.json_args = X['arg_names']
     _func.json_arg_types = arg_types
     _func.json_return_type = return_type
     _func.json_method = method
     _func.json_safe = safe
     _func.json_sig = X['name']
     _func.json_validate = validate
-    jsonrpc_site.register(method, _func)
+    site.register(method, _func)
     return _func
   return decorator

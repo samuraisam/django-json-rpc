@@ -103,6 +103,8 @@ Guide
 
 
 ### The jsonrpc_method decorator
+Wraps a function turns it into a json-rpc method. Adds several attributes to the function speific to the JSON-RPC machinery and adds it to the default jsonrpc_site if one isn't provided. You must import the module containing these functions in your urls.py.
+
 `jsonrpc.jsonrpc_method(name, authenticated=False, safe=False, validate=False)`
 <ul>
 <li>
@@ -132,6 +134,12 @@ Validates the arguments passed to your method based on type information provided
         return SpecialSauce(ingredients, instructions)
 
 Calls to `myapp.specialSauce` will now check each arguments type before calling `special_sauce`, throwing an `InvalidParamsError` when it encounters a discrepancy. This can significantly reduce the amount of code required to write JSON-RPC services.
+</li>
+<li>
+`site=default_site`
+    
+Defines which site the jsonrpc method will be added to. Can be any 
+object that provides a `register(name, func)` method.
 </li>
 </ul>
 

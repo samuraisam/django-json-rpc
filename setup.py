@@ -7,7 +7,7 @@ except ImportError:
 
 setup(
   name="django-json-rpc",
-  version="0.4",
+  version="0.5",
   description="A simple JSON-RPC implementation for Django",
   author="Samuel Sutch",
   author_email="samuraiblog@gmail.com",
