@@ -62,7 +62,47 @@ Method Browser:
 
 We add the `jsonrpc_version` variable to the request object. It be either '1.0', '1.1' or '2.0'. Arg.
 
-### The `jsonrpc.jsonrpc_method` decorator
+Guide
+=====
+
+### Adding JSON-RPC to your application
+
+#### 1. Install django-json-rpc
+
+    git clone git://github.com/samuraisam/django-json-rpc.git
+    cd django-json-rpc
+    python setup.py install
+    
+    # Add 'jsonrpc' to your INSTALLED_APPS in your settings.py file
+
+#### 2. Write JSON-RPC methods
+
+    from jsonrpc import jsonrpc_method
+    
+    @jsonrpc_method('app.register')
+    def register_user(request, username, password):
+      u = User.objects.create_user(username, 'internal@app.net', password)
+      u.save()
+      return u.__dict__
+    
+    @jsonrpc_method('app.change_password', authenticated=True)
+    def change_password(request, new_password):
+      request.user.set_password(new_password)
+      request.user.save()
+      return u.__dict__
+
+#### 3. Add the JSON-RPC mountpoint and import your views
+
+    from jsonrpc import jsonrpc_site
+    import app.views
+    
+    urlpatterns = patterns('', 
+      url(r'^json/$', jsonrpc_site.dispatch, name='jsonrpc_mountpoint'),
+      # ... among your other URLs
+    )
+
+
+### The jsonrpc_method decorator
 `jsonrpc.jsonrpc_method(name, authenticated=False, safe=False, validate=False)`
 <ul>
 <li>
@@ -95,10 +135,10 @@ Calls to `myapp.specialSauce` will now check each arguments type before calling 
 </li>
 </ul>
 
-### Adding type checking to your methods
+### Using type checking on methods
 When writing web services you often end up manually checking the types of parameters passed. django-json-rpc provides a way to eliminate much of that code by specifying the types in your method signature. As specified in the JSON-RPC spec the available types are `Object Array Number Boolean String Nil ` and `Any` meaning any type.
 
-      @jsonrpc_method('app.addStrings(arg1=String, arg2=String) -> String')
+      @jsonrpc_method('app.addStrings(arg1=String, arg2=String) -> String', validate=True)
       def add_strings(request, arg1, arg2):
         return arg1 + arg2
 
@@ -122,3 +162,50 @@ Types can be specified a number of ways, the following are all equivalent:
       
       # with a return value
       @jsonrpc_method('app.findSelection(dict, int) -> list')
+
+### Using the browser
+To access the browser simply add another entry to your `urls.py` file. Make sure to include the name attribute of each url.
+
+    urlpatterns += patterns('', 
+      url(r'^json/browse/$', 'jsonrpc.views.browse', name='jsonrpc_browser')
+    )
+
+
+### Enabling HTTP-GET
+JSON-RPC 1.1 includes support for methods which are accessible by HTTP GET which it calls idempotent. Add the following to your `urls.py` file to set up the GET URL.
+
+    urlpatterns += patterns('', 
+      (r'^json/(?P<method>[a-zA-Z0-9.-_]+)$', jsonrpc_site.dispatch),
+    )
+
+Each method that you want to be accessible by HTTP GET must also be marked safe in the method decorator:
+
+    @jsonrpc_method('app.trimTails(String)', safe=True)
+    def trim_tails(request, arg1):
+      return arg1[:5]
+
+You can then call the method by loading `/jsonrpc/app.trimTails?arg1=omgnowai`
+
+### Using authentication on methods
+There is no specific support for authentication in the JSON-RPC spec beyond whatever authentication the transport offers. To restrict access to methods to registered users provide `authenticated=True` to the method decorator. Doing so will add two arguments to the beginning of your method signature, `username` and `password` (and always in that order). By default, the credentials are authenticated against the builtin `User` database but any method can be used.
+
+    @jsonrpc_method('app.thupertheecrit', authenticated=True)
+    def thupertheecrit(request, value):
+      p = request.user.get_profile()
+      p.theecrit = value
+      p.save()
+      return p.__dict__
+
+Using your own authentication method:
+
+    def mah_authenticate(username, password):
+      return CustomUserClass.authenticate(username, password)
+    
+    @jsonrpc_method('app.thupertheecrit', authenticated=mah_authenticate)
+    def thupertheecrit(request, value):
+      request.user.theecrit = value
+      request.user.save()
+      return request.user.__dict__
+
+In case authentication is handled before your method is called, like in some middleware, providing `authenticated=True` to the method decorator will only check that `request.user` is authenticated and won't add any parameters to the beginning of your method.
+
