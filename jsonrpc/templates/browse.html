@@ -356,10 +356,14 @@
             <tr><th>signature</th><td>
     {{method.name}}({% for param in method.params %}{{param.name}}{% if not forloop.last %}, {% endif %}{% endfor %})</td></tr>
             <tr><th>arguments</th><td>
+              {% if method.params %}
               {% for param in method.params %}
                 {{param.name}} : <span class="type">{{param.type}}</span>
                 {% if not forloop.last %}<br /> {% endif %}
               {% endfor %}
+              {% else %}
+              <em>None Specified</em>
+              {% endif %}
             </td></tr>
             <tr><th>returns</th><td><span class="type">{{method.return.type}}</span></td></tr>
             <tr><th>idempotent</th><td>{{method.idempotent}}</td></tr>
