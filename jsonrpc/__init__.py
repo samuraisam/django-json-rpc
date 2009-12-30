@@ -2,11 +2,11 @@ import re
 from inspect import getargspec
 from functools import wraps
 from django.utils.datastructures import SortedDict
-from jsonrpc.site import jsonrpc_site as default_site
+from jsonrpc.site import jsonrpc_site
 from jsonrpc.types import *
 from jsonrpc.exceptions import *
 
-
+default_site = jsonrpc_site
 KWARG_RE = re.compile(
   r'\s*(?P<arg_name>[a-zA-Z0-9_]+)\s*=\s*(?P<arg_type>[a-zA-Z]+)\s*$')
 SIG_RE = re.compile(
