@@ -15,8 +15,8 @@ SIG_RE = re.compile(
 
 class JSONRPCTypeCheckingUnavailable(Exception): pass
 
-def _type_checking_available(sig=''):
-  if not hasattr(type, '__eq__'): # and False:
+def _type_checking_available(sig='', validate=False):
+  if not hasattr(type, '__eq__') and validate: # and False:
     raise JSONRPCTypeCheckingUnavailable(
       'Type checking is not available in your version of Python '
       'which is only available in Python 2.6 or later. Use Python 2.6 '
@@ -51,7 +51,7 @@ def _eval_arg_type(arg_type, T=Any, arg=None, sig=None):
                       (repr(T), arg, sig))
     return T
 
-def _parse_sig(sig, arg_names):
+def _parse_sig(sig, arg_names, validate=False):
   """
   Parses signatures into a ``SortedDict`` of paramName => type.
   Numerically-indexed arguments that do not correspond to an argument
@@ -70,7 +70,7 @@ def _parse_sig(sig, arg_names):
   ret = [(n, Any) for n in arg_names]
   if 'args_sig' in d and type(d['args_sig']) is str and d['args_sig'].strip():
     for i, arg in enumerate(d['args_sig'].strip().split(',')):
-      _type_checking_available(sig)
+      _type_checking_available(sig, validate)
       if '=' in arg:
         if not type(ret) is SortedDict:
           ret = SortedDict(ret)
@@ -212,7 +212,8 @@ def jsonrpc_method(name, authenticated=False, safe=False, validate=False,
         return func(request, *args, **kwargs)
     else:
       _func = func
-    method, arg_types, return_type = _parse_sig(X['name'], X['arg_names'])
+    method, arg_types, return_type = \
+      _parse_sig(X['name'], X['arg_names'], validate)
     _func.json_args = X['arg_names']
     _func.json_arg_types = arg_types
     _func.json_return_type = return_type
