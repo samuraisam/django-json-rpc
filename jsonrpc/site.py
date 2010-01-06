@@ -216,7 +216,6 @@ class JSONRPCSite(object):
   
   def procedure_desc(self, key):
     M = self.urls[key]
-    print M.json_arg_types
     return {
       'name': M.json_method,
       'summary': M.__doc__,
