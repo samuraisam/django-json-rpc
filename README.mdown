@@ -134,6 +134,8 @@ Validates the arguments passed to your method based on type information provided
         return SpecialSauce(ingredients, instructions)
 
 Calls to `myapp.specialSauce` will now check each arguments type before calling `special_sauce`, throwing an `InvalidParamsError` when it encounters a discrepancy. This can significantly reduce the amount of code required to write JSON-RPC services.
+
+*NOTE:* Type checking is only available on Python versions 2.6 or greater.
 </li>
 <li>
 `site=default_site`
@@ -143,7 +145,7 @@ object that provides a `register(name, func)` method.
 </li>
 </ul>
 
-### Using type checking on methods
+### Using type checking on methods (Python 2.6 or greater)
 When writing web services you often end up manually checking the types of parameters passed. django-json-rpc provides a way to eliminate much of that code by specifying the types in your method signature. As specified in the JSON-RPC spec the available types are `Object Array Number Boolean String Nil ` and `Any` meaning any type.
 
       @jsonrpc_method('app.addStrings(arg1=String, arg2=String) -> String', validate=True)
