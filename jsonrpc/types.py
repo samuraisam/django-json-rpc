@@ -9,7 +9,7 @@ def _types_gen(T):
 
 
 class Type(type):
-  """A rudimentary extension to `type` that provides polymorphic
+  """ A rudimentary extension to `type` that provides polymorphic
   types for run-time type checking of JSON data types. IE:
   
   assert type(u'') == String

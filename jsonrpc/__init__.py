@@ -13,6 +13,14 @@ SIG_RE = re.compile(
   r'\s*(?P<method_name>[a-zA-Z0-9._]+)\s*(\((?P<args_sig>[^)].*)?\)'
   r'\s*(\->\s*(?P<return_sig>.*))?)?\s*$')
 
+class JSONRPCTypeCheckingUnavailable(Exception): pass
+
+def _type_checking_available(sig=''):
+  if not hasattr(type, '__eq__'): # and False:
+    raise JSONRPCTypeCheckingUnavailable(
+      'Type checking is not available in your version of Python '
+      'which is only available in Python 2.6 or later. Use Python 2.6 '
+      'or later or disable type checking in %s' % sig)
 
 def _validate_arg(value, expected):
   "Returns whether or not ``value`` is the ``expected`` type."
@@ -62,6 +70,7 @@ def _parse_sig(sig, arg_names):
   ret = [(n, Any) for n in arg_names]
   if 'args_sig' in d and type(d['args_sig']) is str and d['args_sig'].strip():
     for i, arg in enumerate(d['args_sig'].strip().split(',')):
+      _type_checking_available(sig)
       if '=' in arg:
         if not type(ret) is SortedDict:
           ret = SortedDict(ret)
