@@ -5,7 +5,7 @@ import subprocess
 import time
 import urllib
 
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 TEST_DEFAULTS = {
   'ROOT_URLCONF': 'jsontesturls',
@@ -170,8 +170,9 @@ class JSONRPCFunctionalTests(unittest.TestCase):
 
 class JSONRPCTest(unittest.TestCase):
   def setUp(self):
-    self.proc = subprocess.Popen(['python', 
-      os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test.py')])
+    self.proc = subprocess.Popen([sys.executable, 
+      os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test.py'),
+      'serve'])
     time.sleep(.5)
     self.host = 'http://127.0.0.1:8999/json/'
     self.proxy10 = ServiceProxy(self.host, version='1.0')
@@ -326,9 +327,13 @@ class JSONRPCTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  management.call_command('syncdb', interactive=False)
-  try:
-    User.objects.create_user(username='sammeh', email='sam@rf.com', password='password').save()
-  except:
-    pass
-  json_serve_thread()
+  if len(sys.argv) > 1 and sys.argv[1].strip() == 'serve':
+    management.call_command('syncdb', interactive=False)
+    try:
+      User.objects.create_user(username='sammeh', email='sam@rf.com', password='password').save()
+    except:
+      pass
+    json_serve_thread()
+  else:
+    unittest.main()
+
