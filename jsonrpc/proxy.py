@@ -16,8 +16,7 @@ class ServiceProxy(object):
   
   def __repr__(self):
     return {"jsonrpc": self.__version,
-            "method": self.__service_name,
-            'id': str(uuid.uuid1())}
+            "method": self.__service_name}
   
   def __call__(self, *args, **kwargs):
     params = kwargs if len(kwargs) else args

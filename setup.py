@@ -7,7 +7,7 @@ except ImportError:
 
 setup(
   name="django-json-rpc",
-  version="0.5.1",
+  version="0.6.1",
   description="A simple JSON-RPC implementation for Django",
   long_description="""
 Features:
@@ -285,7 +285,7 @@ the beginning of your method.
   url="http://github.com/samuraisam/django-json-rpc/tree/master",
   download_url="http://github.com/samuraisam/django-json-rpc/tree/master",
   classifiers = [
-    'Development Status :: 4 - Beta',
+    'Development Status :: 5 - Production/Stable',
     'Environment :: Web Environment',
     'Intended Audience :: Developers',
     'License :: OSI Approved :: MIT License',
