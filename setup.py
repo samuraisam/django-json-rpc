@@ -293,4 +293,5 @@ the beginning of your method.
     'Programming Language :: Python',
     'Topic :: Software Development :: Libraries :: Python Modules'],
   packages=['jsonrpc'],
+  install_requires=['Django>=1.0'],
   package_data={'jsonrpc': ['templates/*']})
