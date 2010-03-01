@@ -168,6 +168,36 @@ class JSONRPCFunctionalTests(unittest.TestCase):
     assert Any.kind(None) == Nil
 
 
+class ServiceProxyText(unittest.TestCase):      
+  def setUp(self):
+    self.proc = subprocess.Popen([sys.executable, 
+      os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test.py'),
+      'serve'])
+    time.sleep(.5)
+    self.host = 'http://127.0.0.1:8999/json/'
+  
+  def tearDown(self):
+    self.proc.terminate()
+    self.proc.wait()
+  
+  def test_positional_args(self):
+    proxy = ServiceProxy(self.host)
+    self.assert_(proxy.jsonrpc.test('Hello')[u'result'] == 'Hello')
+    try:
+      proxy.jsonrpc.test(string='Hello')
+    except Exception, e:
+      self.assert_(e.args[0] == 'Unsupport arg type for JSON-RPC 1.0 '
+                                '(the default version for this client, '
+                                'pass version="2.0" to use keyword arguments)')
+    else:
+      self.assert_(False, 'Proxy didnt warn about version mismatch')
+  
+  def test_keyword_args(self):        
+    proxy = ServiceProxy(self.host, version='2.0')
+    self.assert_(proxy.jsonrpc.test(string='Hello')[u'result'] == 'Hello')
+    self.assert_(proxy.jsonrpc.test('Hello')[u'result'] == 'Hello')
+
+
 class JSONRPCTest(unittest.TestCase):
   def setUp(self):
     self.proc = subprocess.Popen([sys.executable, 
