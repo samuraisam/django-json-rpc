@@ -64,7 +64,7 @@ Object = Type('Object', (object,), {}).I(dict).N('obj')
 Number = Type('Number', (object,), {}).I(int, long).N('num')
 Boolean = Type('Boolean', (object,), {}).I(bool).N('bit')
 String = Type('String', (object,), {}).I(str, unicode).N('str')
-Array = Type('Array', (object,), {}).I(list, set).N('arr')
+Array = Type('Array', (object,), {}).I(list, set, tuple).N('arr')
 Nil = Type('Nil', (object,), {}).I(type(None)).N('nil')
 Any = Type('Any', (object,), {}).I(
         Object, Number, Boolean, String, Array, Nil).N('any')
