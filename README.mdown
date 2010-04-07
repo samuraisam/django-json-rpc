@@ -35,9 +35,9 @@ The basic API:
     from jsonrpc import jsonrpc_site
     import myproj.myapp.views # you must import the views that need connected
     
-    urlpatterns += patterns('', 
+    urlpatterns = patterns('', 
+      url(r'^json/browse/', 'jsonrpc.views.browse', name="jsonrpc_browser"), # for the graphical browser/web console only, omissible
       url(r'^json/', jsonrpc_site.dispatch, name="jsonrpc_mountpoint"),
-      url(r'^json/browse/', 'jsonrpc.views.browse', name="jsonrpc_browse"), # for the graphical browser/web console only, omissible
       (r'^json/(?P<method>[a-zA-Z0-9.]+)$', jsonrpc_site.dispatch) # for HTTP GET only, also omissible
     )
 
@@ -174,10 +174,13 @@ Types can be specified a number of ways, the following are all equivalent:
       @jsonrpc_method('app.findSelection(dict, int) -> list')
 
 ### Using the browser
-To access the browser simply add another entry to your `urls.py` file. Make sure to include the name attribute of each url.
+To access the browser simply add another entry to your `urls.py` file, before the json dispatch one. Make sure to include the name attribute of each url.
 
-    urlpatterns += patterns('', 
+    urlpatterns = patterns('',
+      ...
       url(r'^json/browse/$', 'jsonrpc.views.browse', name='jsonrpc_browser')
+      url(r'^json/', jsonrpc_site.dispatch, name="jsonrpc_mountpoint"),
+      ...
     )
 
 
