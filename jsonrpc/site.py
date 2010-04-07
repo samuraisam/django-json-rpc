@@ -9,6 +9,8 @@ try:
 except (NameError, ImportError):
   csrf_exempt = empty_dec
 
+from django.core.serializers.json import DjangoJSONEncoder
+
 NoneType = type(None)
 encode_kw = lambda p: dict([(str(k), v) for k, v in p.iteritems()])
 
@@ -73,13 +75,17 @@ def validate_params(method, D):
 
 class JSONRPCSite(object):
   "A JSON-RPC Site"
-  def __init__(self):
+  def __init__(self, json_encoder=DjangoJSONEncoder):
     self.urls = {}
     self.uuid = str(uuid1())
     self.version = '1.0'
     self.name = 'django-json-rpc'
     self.register('system.describe', self.describe)
-  
+    self.set_json_encoder(json_encoder)
+
+  def set_json_encoder(self, json_encoder=DjangoJSONEncoder):
+    self.json_encoder = json_encoder
+
   def register(self, name, method):
     self.urls[unicode(name)] = method
   
@@ -170,10 +176,10 @@ class JSONRPCSite(object):
     return response, status
   
   @csrf_exempt
-  def dispatch(self, request, method=''):      
+  def dispatch(self, request, method='', json_encoder=None):
     from django.http import HttpResponse
-    from django.core.serializers.json import DjangoJSONEncoder
-    
+    json_encoder = json_encoder or self.json_encoder
+
     try:
       # in case we do something json doesn't like, we always get back valid json-rpc response
       response = self.empty_response()
@@ -198,11 +204,11 @@ class JSONRPCSite(object):
         if response is None and (not u'id' in D or D[u'id'] is None): # a notification
           return HttpResponse('', status=status)
       
-      json_rpc = dumps(response, cls=DjangoJSONEncoder)
+      json_rpc = dumps(response, cls=json_encoder)
     except Error, e:
       response['error'] = e.json_rpc_format
       status = e.status
-      json_rpc = dumps(response, cls=DjangoJSONEncoder)
+      json_rpc = dumps(response, cls=json_encoder)
     except Exception, e:
       # exception missed by others
       other_error = OtherError(e)
@@ -210,7 +216,7 @@ class JSONRPCSite(object):
       response['error'] = other_error.json_rpc_format
       status = other_error.status    
       
-      json_rpc = dumps(response,cls=DjangoJSONEncoder)
+      json_rpc = dumps(response,cls=json_encoder)
     
     return HttpResponse(json_rpc, status=status, content_type='application/json-rpc')
   
