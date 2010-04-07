@@ -114,7 +114,8 @@ class JSONRPCSite(object):
         return True, D
     return False, {}
   
-  def response_dict(self, request, D, is_batch=False, version_hint='1.0'):
+  def response_dict(self, request, D, is_batch=False, version_hint='1.0', json_encoder=None):
+    json_encoder = json_encoder or self.json_encoder
     version = version_hint
     response = self.empty_response(version=version)
     apply_version = {'2.0': lambda f, r, p: f(r, **encode_kw(p)) if type(p) is dict else f(r, *p),
@@ -144,10 +145,16 @@ class JSONRPCSite(object):
         validate_params(method, D)
       R = apply_version[version](method, request, D['params'])
       
-      assert sum(map(lambda e: isinstance(R, e), 
-        (dict, str, unicode, int, long, list, set, NoneType, bool))), \
-        "Return type not supported"
-      
+      encoder = json_encoder()
+      try:
+        rs = encoder.default(R)
+      except TypeError, exc:
+        raise TypeError("Return type not supported, for %r" % R)
+
+      if not sum(map(lambda e: isinstance(rs, e), 
+                     (dict, str, unicode, int, long, list, set, NoneType, bool))):
+        raise TypeError("Return type not supported, for %r" % rs)
+
       if 'id' in D and D['id'] is not None: # regular request
         response['result'] = R
         response['id'] = D['id']
@@ -197,10 +204,10 @@ class JSONRPCSite(object):
           raise InvalidRequestError
       
       if type(D) is list:
-        response = [self.response_dict(request, d, is_batch=True)[0] for d in D]
+        response = [self.response_dict(request, d, is_batch=True, json_encoder=json_encoder)[0] for d in D]
         status = 200
       else:
-        response, status = self.response_dict(request, D)
+        response, status = self.response_dict(request, D, json_encoder=json_encoder)
         if response is None and (not u'id' in D or D[u'id'] is None): # a notification
           return HttpResponse('', status=status)
       
