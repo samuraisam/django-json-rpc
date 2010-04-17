@@ -167,18 +167,22 @@ class JSONRPCFunctionalTests(unittest.TestCase):
     assert Any.kind({}) == Object
     assert Any.kind(None) == Nil
 
+proc = None
 
 class ServiceProxyText(unittest.TestCase):      
   def setUp(self):
-    self.proc = subprocess.Popen([sys.executable, 
-      os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test.py'),
-      'serve'])
-    time.sleep(.5)
+    global proc
+    if proc is None:
+      proc = subprocess.Popen([sys.executable, 
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test.py'),
+        'serve'])
+      time.sleep(1)
     self.host = 'http://127.0.0.1:8999/json/'
   
   def tearDown(self):
-    self.proc.terminate()
-    self.proc.wait()
+    # self.proc.terminate()
+    # self.proc.wait()
+    pass
   
   def test_positional_args(self):
     proxy = ServiceProxy(self.host)
@@ -200,17 +204,20 @@ class ServiceProxyText(unittest.TestCase):
 
 class JSONRPCTest(unittest.TestCase):
   def setUp(self):
-    self.proc = subprocess.Popen([sys.executable, 
-      os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test.py'),
-      'serve'])
-    time.sleep(.5)
+    global proc
+    if proc is None:
+      proc = subprocess.Popen([sys.executable, 
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test.py'),
+        'serve'])
+      time.sleep(1)
     self.host = 'http://127.0.0.1:8999/json/'
     self.proxy10 = ServiceProxy(self.host, version='1.0')
     self.proxy20 = ServiceProxy(self.host, version='2.0')
   
   def tearDown(self):
-    self.proc.terminate()
-    self.proc.wait()
+    # self.proc.terminate()
+    # self.proc.wait()
+    pass
   
   def test_10(self):
     self.assertEqual(
@@ -366,4 +373,7 @@ if __name__ == '__main__':
     json_serve_thread()
   else:
     unittest.main()
+    if proc is not None:
+      proc.terminate()
+      proc.wait()
 
