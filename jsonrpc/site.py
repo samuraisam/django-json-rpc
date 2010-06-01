@@ -4,6 +4,7 @@ from uuid import uuid1
 from jsonrpc._json import loads, dumps
 from jsonrpc.exceptions import *
 from jsonrpc.types import *
+from django.core import signals
 empty_dec = lambda f: f
 try:
   from django.views.decorators.csrf import csrf_exempt
@@ -167,15 +168,17 @@ class JSONRPCSite(object):
       status = 200
     
     except Error, e:
+      signals.got_request_exception.send(sender=self.__class__, request=request)
       response['error'] = e.json_rpc_format
       if version == '1.1' and 'result' in response:
         response.pop('result')
-      status = e.status    
+      status = e.status
     except Exception, e:
       # exception missed by others
+      signals.got_request_exception.send(sender=self.__class__, request=request)
       other_error = OtherError(e)
       response['error'] = other_error.json_rpc_format
-      status = other_error.status    
+      status = other_error.status
       if version == '1.1' and 'result' in response:
         response.pop('result')
     
@@ -212,11 +215,13 @@ class JSONRPCSite(object):
       
       json_rpc = dumps(response, cls=json_encoder)
     except Error, e:
+      signals.got_request_exception.send(sender=self.__class__, request=request)
       response['error'] = e.json_rpc_format
       status = e.status
       json_rpc = dumps(response, cls=json_encoder)
     except Exception, e:
       # exception missed by others
+      signals.got_request_exception.send(sender=self.__class__, request=request)
       other_error = OtherError(e)
       response['result'] = None
       response['error'] = other_error.json_rpc_format
