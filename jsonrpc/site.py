@@ -125,6 +125,10 @@ class JSONRPCSite(object):
                      '1.0': lambda f, r, p: f(r, *p)}
     
     try:
+      # params: An Array or Object, that holds the actual parameter values 
+      # for the invocation of the procedure. Can be omitted if empty.
+      if 'params' not in D:
+         D['params'] = []
       if 'method' not in D or 'params' not in D:
         raise InvalidParamsError('Request requires str:"method" and list:"params"')
       if D['method'] not in self.urls:
