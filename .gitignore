@@ -19,5 +19,5 @@ syntax: glob
 *.sqlite3
 __pycache__
 build/*
-
-
+dist/*
+django_json_rpc.egg-info/*
