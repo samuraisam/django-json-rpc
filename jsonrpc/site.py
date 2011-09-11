@@ -185,6 +185,11 @@ class JSONRPCSite(object):
       status = other_error.status
       if version in ('1.1', '2.0') and 'result' in response:
         response.pop('result')
+
+    # Exactly one of result or error MUST be specified. It's not
+    # allowed to specify both or none.
+    if version in ('1.1', '2.0') and 'error' in response and not response['error']:
+      response.pop('error')
     
     return response, status
   
