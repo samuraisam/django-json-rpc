@@ -172,7 +172,7 @@ class JSONRPCFunctionalTests(unittest.TestCase):
 
 proc = None
 
-class ServiceProxyText(unittest.TestCase):      
+class ServiceProxyTest(unittest.TestCase):      
   def setUp(self):
     global proc
     if proc is None:
