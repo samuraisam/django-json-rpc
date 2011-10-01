@@ -125,6 +125,10 @@ class JSONRPCSite(object):
                      '1.0': lambda f, r, p: f(r, *p)}
     
     try:
+      # params: An Array or Object, that holds the actual parameter values 
+      # for the invocation of the procedure. Can be omitted if empty.
+      if 'params' not in D:
+         D['params'] = []
       if 'method' not in D or 'params' not in D:
         raise InvalidParamsError('Request requires str:"method" and list:"params"')
       if D['method'] not in self.urls:
@@ -158,7 +162,7 @@ class JSONRPCSite(object):
       if 'id' in D and D['id'] is not None: # regular request
         response['result'] = R
         response['id'] = D['id']
-        if version == '1.1' and 'error' in response:
+        if version in ('1.1', '2.0') and 'error' in response:
           response.pop('error')
       elif is_batch: # notification, not ok in a batch format, but happened anyway
         raise InvalidRequestError
@@ -170,7 +174,7 @@ class JSONRPCSite(object):
     except Error, e:
       signals.got_request_exception.send(sender=self.__class__, request=request)
       response['error'] = e.json_rpc_format
-      if version == '1.1' and 'result' in response:
+      if version in ('1.1', '2.0') and 'result' in response:
         response.pop('result')
       status = e.status
     except Exception, e:
@@ -179,8 +183,13 @@ class JSONRPCSite(object):
       other_error = OtherError(e)
       response['error'] = other_error.json_rpc_format
       status = other_error.status
-      if version == '1.1' and 'result' in response:
+      if version in ('1.1', '2.0') and 'result' in response:
         response.pop('result')
+
+    # Exactly one of result or error MUST be specified. It's not
+    # allowed to specify both or none.
+    if version in ('1.1', '2.0') and 'error' in response and not response['error']:
+      response.pop('error')
     
     return response, status
   

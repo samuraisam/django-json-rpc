@@ -1,0 +1,23 @@
+syntax: glob
+*~
+*.pyc
+*.pyo
+*.swp
+*.out
+*.log
+*.bak
+*.orig
+*.db
+*.log
+*.bak
+*.orig
+*.db
+*.pydevproject
+*.project
+*.settings
+*.directory
+*.sqlite3
+__pycache__
+build/*
+dist/*
+django_json_rpc.egg-info/*
