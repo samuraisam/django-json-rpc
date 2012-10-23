@@ -30,9 +30,9 @@ class Error(Exception):
     """ return the Exception data in a format for JSON-RPC """
     
     error = {
-        'name': str(self.__class__.__name__),
+        'name': unicode(self.__class__.__name__),
         'code': self.code,
-        'message': "%s: %s" % (str(self.__class__.__name__), str(self.message)),
+        'message': "%s: %s" % (unicode(self.__class__.__name__), unicode(self.message)),
         'data': self.data}
 
     from django.conf import settings
