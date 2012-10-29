@@ -119,7 +119,7 @@ def _inject_args(sig, types):
   return sig
 
 def jsonrpc_method(name, authenticated=False,
-                   authentication_arguments=['username', 'password']
+                   authentication_arguments=['username', 'password'],
                    safe=False, validate=False, site=default_site):
   """
   Wraps a function turns it into a json-rpc method. Adds several attributes
