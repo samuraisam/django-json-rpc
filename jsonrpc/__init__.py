@@ -118,8 +118,9 @@ def _inject_args(sig, types):
     sig = '%s(%s)' % (sig, ', '.join(types))
   return sig
 
-def jsonrpc_method(name, authenticated=False, safe=False, validate=False,
-                   site=default_site):
+def jsonrpc_method(name, authenticated=False,
+                   authentication_arguments=['username', 'password']
+                   safe=False, validate=False, site=default_site):
   """
   Wraps a function turns it into a json-rpc method. Adds several attributes
   to the function speific to the JSON-RPC machinery and adds it to the default
@@ -176,7 +177,7 @@ def jsonrpc_method(name, authenticated=False, safe=False, validate=False,
     if authenticated:
       if authenticated is True:
         # TODO: this is an assumption
-        X['arg_names'] = ['username', 'password'] + X['arg_names']
+        X['arg_names'] = authentication_arguments + X['arg_names']
         X['name'] = _inject_args(X['name'], ('String', 'String'))
         from django.contrib.auth import authenticate
         from django.contrib.auth.models import User
@@ -191,17 +192,25 @@ def jsonrpc_method(name, authenticated=False, safe=False, validate=False,
             or user is None):
           user = None
           try:
-            creds = args[:2]
-            user = authenticate(username=creds[0], password=creds[1])
+            creds = args[:len(authentication_arguments)]
+            user = authenticate(*creds)
             if user is not None:
-              args = args[2:]
+              args = args[len(authentication_arguments):]
           except IndexError: 
             if 'username' in kwargs and 'password' in kwargs:
-              user = authenticate(username=kwargs['username'],
-                                  password=kwargs['password'])
+              auth_kwargs = {}
+              try:
+                for auth_kwarg in authentication_arguments:
+                  auth_kwargs[auth_kwarg] = kwargs[auth_kwarg]
+              except KeyError:
+                raise InvalidParamsError(
+                  'Authenticated methods require at least '
+                  '[%s] or {%s} arguments', authentication_arguments)
+
+              user = authenticate(**auth_kwargs)
               if user is not None:
-                kwargs.pop('username')
-                kwargs.pop('password')
+                for auth_kwarg in authentication_arguments:
+                  kwargs.pop('auth_kwarg')
             else:
               raise InvalidParamsError(
                 'Authenticated methods require at least '
