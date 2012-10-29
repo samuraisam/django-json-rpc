@@ -21,3 +21,4 @@ __pycache__
 build/*
 dist/*
 django_json_rpc.egg-info/*
+*.DS_Store
