@@ -175,11 +175,11 @@ def jsonrpc_method(name, authenticated=False,
     arg_names = getargspec(func)[0][1:]
     X = {'name': name, 'arg_names': arg_names}
     if authenticated:
-      if authenticated is True:
+      if authenticated is True or callable(authenticated):
         # TODO: this is an assumption
         X['arg_names'] = authentication_arguments + X['arg_names']
         X['name'] = _inject_args(X['name'], ('String', 'String'))
-        from django.contrib.auth import authenticate
+        from django.contrib.auth import authenticate as _authenticate
         from django.contrib.auth.models import User
       else:
         authenticate = authenticated
@@ -193,11 +193,12 @@ def jsonrpc_method(name, authenticated=False,
           user = None
           try:
             creds = args[:len(authentication_arguments)]
-            user = authenticate(*creds)
+            if len(creds) == 0:
+                raise IndexError
+            user = _authenticate(*creds)
             if user is not None:
               args = args[len(authentication_arguments):]
           except IndexError: 
-            if 'username' in kwargs and 'password' in kwargs:
               auth_kwargs = {}
               try:
                 for auth_kwarg in authentication_arguments:
@@ -207,14 +208,10 @@ def jsonrpc_method(name, authenticated=False,
                   'Authenticated methods require at least '
                   '[%s] or {%s} arguments', authentication_arguments)
 
-              user = authenticate(**auth_kwargs)
+              user = _authenticate(**auth_kwargs)
               if user is not None:
                 for auth_kwarg in authentication_arguments:
-                  kwargs.pop('auth_kwarg')
-            else:
-              raise InvalidParamsError(
-                'Authenticated methods require at least '
-                '[username, password] or {username: password:} arguments')
+                  kwargs.pop(auth_kwarg)
           if user is None:
             raise InvalidCredentialsError
           request.user = user
