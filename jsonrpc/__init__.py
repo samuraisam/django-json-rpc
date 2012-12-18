@@ -195,7 +195,8 @@ def jsonrpc_method(name, authenticated=False,
             creds = args[:len(authentication_arguments)]
             if len(creds) == 0:
                 raise IndexError
-            user = _authenticate(*creds)
+            # Django's authenticate() method takes arguments as dict
+            user = _authenticate(username=creds[0], password=creds[1], *creds[2:])
             if user is not None:
               args = args[len(authentication_arguments):]
           except IndexError: 
