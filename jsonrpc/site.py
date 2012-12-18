@@ -149,18 +149,8 @@ class JSONRPCSite(object):
       method = self.urls[str(D['method'])]
       if getattr(method, 'json_validate', False):
         validate_params(method, D)
-      R = apply_version[version](method, request, D['params'])
-      
-      encoder = json_encoder()
-      if not sum(map(lambda e: isinstance(R, e), # type of `R` should be one of these or...
-         (dict, str, unicode, int, long, list, set, NoneType, bool))):
-        try:
-          rs = encoder.default(R) # ...or something this thing supports
-        except TypeError, exc:
-          raise TypeError("Return type not supported, for %r" % R)
 
       if 'id' in D and D['id'] is not None: # regular request
-        response['result'] = R
         response['id'] = D['id']
         if version in ('1.1', '2.0') and 'error' in response:
           response.pop('error')
@@ -169,6 +159,19 @@ class JSONRPCSite(object):
       else: # notification
         return None, 204
       
+
+      R = apply_version[version](method, request, D['params'])
+
+      encoder = json_encoder()
+      if not sum(map(lambda e: isinstance(R, e), # type of `R` should be one of these or...
+         (dict, str, unicode, int, long, list, set, NoneType, bool))):
+        try:
+          rs = encoder.default(R) # ...or something this thing supports
+        except TypeError, exc:
+          raise TypeError("Return type not supported, for %r" % R)
+
+      response['result'] = R
+
       status = 200
     
     except Error, e:
