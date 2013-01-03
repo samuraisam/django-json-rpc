@@ -156,11 +156,11 @@ class JSONRPCSite(object):
           response.pop('error')
       elif is_batch: # notification, not ok in a batch format, but happened anyway
         raise InvalidRequestError
-      else: # notification
-        return None, 204
-      
 
       R = apply_version[version](method, request, D['params'])
+
+      if 'id' not in D or ('id' in D and D['id'] is None): # notification
+        return None, 204
 
       encoder = json_encoder()
       if not sum(map(lambda e: isinstance(R, e), # type of `R` should be one of these or...
