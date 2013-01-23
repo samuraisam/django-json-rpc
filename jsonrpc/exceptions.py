@@ -95,5 +95,5 @@ class InvalidCredentialsError(Error):
 class OtherError(Error):
   """ catchall error """
   code = 500
-  message = _('Error missed by other execeptions')
+  message = _('Error missed by other exceptions')
   status = 500

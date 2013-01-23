@@ -32,7 +32,7 @@ class ServiceProxy(object):
   def __call__(self, *args, **kwargs):
     params = kwargs if len(kwargs) else args
     if Any.kind(params) == Object and self.version != '2.0':
-      raise Exception('Unsupport arg type for JSON-RPC 1.0 '
+      raise Exception('Unsupported arg type for JSON-RPC 1.0 '
                      '(the default version for this client, '
                      'pass version="2.0" to use keyword arguments)')
     

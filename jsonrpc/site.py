@@ -53,7 +53,7 @@ def validate_params(method, D):
   if type(D['params']) == Object:
     keys = method.json_arg_types.keys()
     if len(keys) != len(D['params']):
-      raise InvalidParamsError('Not eough params provided for %s' % method.json_sig)
+      raise InvalidParamsError('Not enough params provided for %s' % method.json_sig)
     for k in keys:
       if not k in D['params']:
         raise InvalidParamsError('%s is not a valid parameter for %s' 
@@ -72,7 +72,7 @@ def validate_params(method, D):
       raise InvalidParamsError('Too many params provided for %s' % method.json_sig)
     else:
       if len(D['params']) != len(arg_types):
-        raise InvalidParamsError('Not enouh params provided for %s' % method.json_sig)
+        raise InvalidParamsError('Not enough params provided for %s' % method.json_sig)
 
 
 class JSONRPCSite(object):
@@ -208,7 +208,7 @@ class JSONRPCSite(object):
         valid, D = self.validate_get(request, method)
         if not valid:
           raise InvalidRequestError('The method you are trying to access is '
-                                    'not availble by GET requests')
+                                    'not available by GET requests')
       elif not request.method.lower() == 'post':
         raise RequestPostError
       else:
