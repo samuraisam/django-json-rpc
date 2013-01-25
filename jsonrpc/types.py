@@ -59,7 +59,7 @@ class Type(type):
       lambda L, R: R if (str(R) == n) else L,
       _types_gen(self))
 
-# JSON primatives and data types
+# JSON primitives and data types
 Object = Type('Object', (object,), {}).I(dict).N('obj')
 Number = Type('Number', (object,), {}).I(int, long).N('num')
 Boolean = Type('Boolean', (object,), {}).I(bool).N('bit')

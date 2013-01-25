@@ -30,7 +30,7 @@ def _validate_arg(value, expected):
 
 def _eval_arg_type(arg_type, T=Any, arg=None, sig=None):
   """
-  Returns a type from a snippit of python source. Should normally be
+  Returns a type from a snippet of python source. Should normally be
   something just like 'str' or 'Object'.
   
     arg_type      the source to be evaluated
@@ -123,7 +123,7 @@ def jsonrpc_method(name, authenticated=False,
                    safe=False, validate=False, site=default_site):
   """
   Wraps a function turns it into a json-rpc method. Adds several attributes
-  to the function speific to the JSON-RPC machinery and adds it to the default
+  to the function specific to the JSON-RPC machinery and adds it to the default
   jsonrpc_site if one isn't provided. You must import the module containing
   these functions in your urls.py.
   
@@ -141,7 +141,7 @@ def jsonrpc_method(name, authenticated=False,
         and `password` will not be added, and this method will only check 
         against `request.user.is_authenticated`.
 
-        You may pass a callablle to replace `django.contrib.auth.authenticate`
+        You may pass a callable to replace `django.contrib.auth.authenticate`
         as the authentication method. It must return either a User or `None`
         and take the keyword arguments `username` and `password`.
 
