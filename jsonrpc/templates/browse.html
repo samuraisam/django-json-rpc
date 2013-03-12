@@ -1,8 +1,9 @@
+{% load url from future %}
 <html>
   <head>
     <title>JSON-RPC Browser</title>
-    <script type="application/x-javascript" src="{% url jsonrpc_browser %}?f=mochikit.js"></script>
-    <script type="application/x-javascript" src="{% url jsonrpc_browser %}?f=interpreter.js"></script>
+    <script type="application/x-javascript" src="{% url "jsonrpc_browser" %}?f=mochikit.js"></script>
+    <script type="application/x-javascript" src="{% url "jsonrpc_browser" %}?f=interpreter.js"></script>
     <script type="application/x-javascript">
     METHOD_NAMES = {{method_names_str|safe}};
     
@@ -161,7 +162,7 @@
         });
         writeln('Requesting ->');
         writeln(SPAN({'class': 'json_req'}, req));
-        var d = doXHR('{% url jsonrpc_mountpoint %}', {
+        var d = doXHR('{% url "jsonrpc_mountpoint" %}', {
           'method': 'POST',
           'sendContent': req,
           'mimeType': 'application/x-javascript'
