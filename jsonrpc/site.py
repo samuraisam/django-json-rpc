@@ -213,7 +213,10 @@ class JSONRPCSite(object):
         raise RequestPostError
       else:
         try:
-          D = loads(request.raw_post_data)
+          if hasattr(request, "body"):
+              D = loads(request.body)
+          else:
+              D = loads(request.raw_post_data)
         except:
           raise InvalidRequestError
       

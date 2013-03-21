@@ -21,8 +21,12 @@ TEST_DEFAULTS = {
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions'),
-  'DATABASE_ENGINE': 'sqlite3',
-  'DATABASE_NAME': 'test.sqlite3',
+  'DATABASES': {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'test.sqlite3',
+      },
+  },
   'MIDDLEWARE_CLASSES': (
       'django.middleware.common.CommonMiddleware',
       'django.contrib.sessions.middleware.SessionMiddleware',
@@ -193,7 +197,7 @@ class ServiceProxyTest(unittest.TestCase):
     try:
       proxy.jsonrpc.test(string='Hello')
     except Exception, e:
-      self.assert_(e.args[0] == 'Unsupport arg type for JSON-RPC 1.0 '
+      self.assert_(e.args[0] == 'Unsupported arg type for JSON-RPC 1.0 '
                                 '(the default version for this client, '
                                 'pass version="2.0" to use keyword arguments)')
     else:
