@@ -1,5 +1,5 @@
 try:
-  from django.utils.translation import gettext as _
+  from django.utils.translation import ugettext_lazy as _
   _("You're lazy...") # this function lazy-loads settings
 except (ImportError, NameError):
   _ = lambda t, *a, **k: t
