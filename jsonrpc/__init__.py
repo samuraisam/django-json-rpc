@@ -1,10 +1,17 @@
 import re
 from inspect import getargspec
 from functools import wraps
-from django.utils.datastructures import SortedDict
 from jsonrpc.site import jsonrpc_site
 from jsonrpc.types import *
 from jsonrpc.exceptions import *
+
+try:
+  from collections import OrderedDict
+except ImportError:
+  # Use SortedDict instead of OrderedDict for python < 2.7
+  # Can be removed when support for Django < 1.7 is dropped
+  # https://docs.djangoproject.com/en/1.7/releases/1.7/#django-utils-datastructures-sorteddict
+  from django.utils.datastructures import SortedDict as OrderedDict
 
 default_site = jsonrpc_site
 KWARG_RE = re.compile(
@@ -53,7 +60,7 @@ def _eval_arg_type(arg_type, T=Any, arg=None, sig=None):
 
 def _parse_sig(sig, arg_names, validate=False):
   """
-  Parses signatures into a ``SortedDict`` of paramName => type.
+  Parses signatures into a ``OrderedDict`` of paramName => type.
   Numerically-indexed arguments that do not correspond to an argument
   name in python (ie: it takes a variable number of arguments) will be
   keyed as the stringified version of it's index.
@@ -72,8 +79,8 @@ def _parse_sig(sig, arg_names, validate=False):
     for i, arg in enumerate(d['args_sig'].strip().split(',')):
       _type_checking_available(sig, validate)
       if '=' in arg:
-        if not type(ret) is SortedDict:
-          ret = SortedDict(ret)
+        if not type(ret) is OrderedDict:
+          ret = OrderedDict(ret)
         dk = KWARG_RE.match(arg)
         if not dk:
           raise ValueError('Could not parse arg type %s in %s' % (arg, sig))
@@ -83,15 +90,15 @@ def _parse_sig(sig, arg_names, validate=False):
           raise ValueError('Invalid kwarg value %s in %s' % (arg, sig))
         ret[dk['arg_name']] = _eval_arg_type(dk['arg_type'], None, arg, sig)
       else:
-        if type(ret) is SortedDict:
+        if type(ret) is OrderedDict:
           raise ValueError('Positional arguments must occur '
                            'before keyword arguments in %s' % sig)
         if len(ret) < i + 1:
           ret.append((str(i), _eval_arg_type(arg, None, arg, sig)))
         else:
           ret[i] = (ret[i][0], _eval_arg_type(arg, None, arg, sig))
-  if not type(ret) is SortedDict:
-    ret = SortedDict(ret)
+  if not type(ret) is OrderedDict:
+    ret = OrderedDict(ret)
   return (d['method_name'], 
           ret, 
           (_eval_arg_type(d['return_sig'], Any, 'return', sig)
