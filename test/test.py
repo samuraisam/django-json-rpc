@@ -44,12 +44,20 @@ settings.configure(**TEST_DEFAULTS)
 
 from django.core import management
 from django.contrib.auth.models import User
-from jsonrpc import jsonrpc_method, _parse_sig, Any, SortedDict
+from jsonrpc import jsonrpc_method, _parse_sig, Any
 from jsonrpc.proxy import ServiceProxy
 from jsonrpc._json import loads, dumps
 from jsonrpc.site import validate_params
 from jsonrpc.exceptions import *
 from jsonrpc.types import *
+
+try:
+  from collections import OrderedDict
+except ImportError:
+  # Use SortedDict instead of OrderedDict for python < 2.7
+  # Can be removed when support for Django < 1.7 is dropped
+  # https://docs.djangoproject.com/en/1.7/releases/1.7/#django-utils-datastructures-sorteddict
+  from django.utils.datastructures import SortedDict as OrderedDict
 
 
 def _call(host, req):
@@ -115,14 +123,14 @@ def checkedVarArgsEcho(request, *args, **kw):
 class JSONRPCFunctionalTests(unittest.TestCase):
   def test_method_parser(self):
     working_sigs = [
-      ('jsonrpc', 'jsonrpc', SortedDict(), Any),
-      ('jsonrpc.methodName', 'jsonrpc.methodName', SortedDict(), Any),
-      ('jsonrpc.methodName() -> list', 'jsonrpc.methodName', SortedDict(), list),
-      ('jsonrpc.methodName(str, str, str ) ', 'jsonrpc.methodName', SortedDict([('a', str), ('b', str), ('c', str)]), Any),
-      ('jsonrpc.methodName(str, b=str, c=str)', 'jsonrpc.methodName', SortedDict([('a', str), ('b', str), ('c', str)]), Any),
-      ('jsonrpc.methodName(str, b=str) -> dict', 'jsonrpc.methodName', SortedDict([('a', str), ('b', str)]), dict),
-      ('jsonrpc.methodName(str, str, c=Any) -> Any', 'jsonrpc.methodName', SortedDict([('a', str), ('b', str), ('c', Any)]), Any),
-      ('jsonrpc(Any ) ->  Any', 'jsonrpc', SortedDict([('a', Any)]), Any),
+      ('jsonrpc', 'jsonrpc', OrderedDict(), Any),
+      ('jsonrpc.methodName', 'jsonrpc.methodName', OrderedDict(), Any),
+      ('jsonrpc.methodName() -> list', 'jsonrpc.methodName', OrderedDict(), list),
+      ('jsonrpc.methodName(str, str, str ) ', 'jsonrpc.methodName', OrderedDict([('a', str), ('b', str), ('c', str)]), Any),
+      ('jsonrpc.methodName(str, b=str, c=str)', 'jsonrpc.methodName', OrderedDict([('a', str), ('b', str), ('c', str)]), Any),
+      ('jsonrpc.methodName(str, b=str) -> dict', 'jsonrpc.methodName', OrderedDict([('a', str), ('b', str)]), dict),
+      ('jsonrpc.methodName(str, str, c=Any) -> Any', 'jsonrpc.methodName', OrderedDict([('a', str), ('b', str), ('c', Any)]), Any),
+      ('jsonrpc(Any ) ->  Any', 'jsonrpc', OrderedDict([('a', Any)]), Any),
     ]
     error_sigs = [
       ('jsonrpc(str) -> nowai', ValueError),
