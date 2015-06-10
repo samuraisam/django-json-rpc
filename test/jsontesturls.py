@@ -1,4 +1,9 @@
-from django.conf.urls.defaults import *
+try:
+  from django.conf.urls import patterns, url
+except ImportError:
+  # Compatibility with Django <= 1.3
+  from django.conf.urls.defaults import patterns, url
+
 from jsonrpc.site import jsonrpc_site
 
 urlpatterns = patterns('', 
