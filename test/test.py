@@ -42,6 +42,11 @@ TEST_DEFAULTS = {
 from django.conf import settings
 settings.configure(**TEST_DEFAULTS)
 
+import django
+if hasattr(django, 'setup'):
+  # Run django.setup() for Django>=1.7
+  django.setup()
+
 from django.core import management
 from django.contrib.auth.models import User
 from jsonrpc import jsonrpc_method, _parse_sig, Any
@@ -191,9 +196,9 @@ class ServiceProxyTest(unittest.TestCase):
       proc = subprocess.Popen([sys.executable, 
         os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test.py'),
         'serve'])
-      time.sleep(1)
+      time.sleep(10)
     self.host = 'http://127.0.0.1:8999/json/'
-  
+
   def tearDown(self):
     # self.proc.terminate()
     # self.proc.wait()
@@ -221,14 +226,14 @@ class JSONRPCTest(unittest.TestCase):
   def setUp(self):
     global proc
     if proc is None:
-      proc = subprocess.Popen([sys.executable, 
+      proc = subprocess.Popen([sys.executable,
         os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test.py'),
         'serve'])
-      time.sleep(1)
+      time.sleep(10)
     self.host = 'http://127.0.0.1:8999/json/'
     self.proxy10 = ServiceProxy(self.host, version='1.0')
     self.proxy20 = ServiceProxy(self.host, version='2.0')
-  
+
   def tearDown(self):
     # self.proc.terminate()
     # self.proc.wait()
