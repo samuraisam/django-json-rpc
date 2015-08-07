@@ -39,8 +39,6 @@ matrix:
       env: DJANGO_VERSION=1.7.*
     - python: 3.4
       env: DJANGO_VERSION=1.8.*
-# Python 3 are allowed to fail because it is not supported at this moment
-  allow_failures:
     - python: 3.2
       env: DJANGO_VERSION=1.5.*
     - python: 3.2
