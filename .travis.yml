@@ -63,6 +63,7 @@ matrix:
       env: DJANGO_VERSION=1.8.*
 # command to install Django
 install:
+  - pip install -q six
   - pip install -q Django==$DJANGO_VERSION
 # command to run tests
 script: python test/test.py
