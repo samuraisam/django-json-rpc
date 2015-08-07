@@ -248,6 +248,8 @@ class JSONRPCFunctionalTests(unittest.TestCase):
     assert Any.decode('str') == String
     assert Any.kind({}) == Object
     assert Any.kind(None) == Nil
+    assert type(1) == Number
+    assert type(1.1) == Number
 
 
 class ServiceProxyTest(JSONServerTestCase):

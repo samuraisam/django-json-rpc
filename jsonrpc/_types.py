@@ -77,10 +77,11 @@ class Type(type):
 str_types = (six.text_type,)
 if six.PY2:
   str_types += (six.binary_type,)
+num_types = six.integer_types + (float,)
 
 # JSON primitives and data types
 Object = Type('Object', (object,), {}).I(dict).N('obj')
-Number = Type('Number', (object,), {}).I(*six.integer_types).N('num')
+Number = Type('Number', (object,), {}).I(*num_types).N('num')
 Boolean = Type('Boolean', (object,), {}).I(bool).N('bit')
 String = Type('String', (object,), {}).I(*str_types).N('str')
 Array = Type('Array', (object,), {}).I(list, set, tuple).N('arr')
