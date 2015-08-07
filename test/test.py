@@ -184,7 +184,7 @@ def authCheckedEcho(request, obj1, arr1):
 
 @jsonrpc_method('jsonrpc.varArgs(String, String, str3=String) -> Array', validate=True)
 def checkedVarArgsEcho(request, *args, **kw):
-  return list(args) + kw.values()
+  return list(args) + list(kw.values())
 
 
 class JSONRPCFunctionalTests(unittest.TestCase):
