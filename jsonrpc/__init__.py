@@ -51,7 +51,7 @@ def _eval_arg_type(arg_type, T=Any, arg=None, sig=None):
   """
   try:
     T = eval(arg_type)
-  except Exception, e:
+  except Exception as e:
     raise ValueError('The type of %s could not be evaluated in %s for %s: %s' %
                     (arg_type, arg, sig, str(e)))
   else:
@@ -184,7 +184,7 @@ def jsonrpc_method(name, authenticated=False,
     arg_names = getargspec(func)[0][1:]
     X = {'name': name, 'arg_names': arg_names}
     if authenticated:
-      if authenticated is True or callable(authenticated):
+      if authenticated is True or six.callable(authenticated):
         # TODO: this is an assumption
         X['arg_names'] = authentication_arguments + X['arg_names']
         X['name'] = _inject_args(X['name'], ('String', 'String'))
@@ -197,7 +197,7 @@ def jsonrpc_method(name, authenticated=False,
         user = getattr(request, 'user', None)
         is_authenticated = getattr(user, 'is_authenticated', lambda: False)
         if ((user is not None
-              and callable(is_authenticated) and not is_authenticated())
+              and six.callable(is_authenticated) and not is_authenticated())
             or user is None):
           user = None
           try:
