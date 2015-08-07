@@ -7,6 +7,7 @@ except ImportError:
   import subprocess_ as subprocess
 import time
 import urllib
+import threading
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
@@ -69,11 +70,69 @@ def _call(host, req):
   return loads(urllib.urlopen(host, dumps(req)).read())
 
 
-def json_serve_thread():
-  from wsgiref.simple_server import make_server
-  from django.core.handlers.wsgi import WSGIHandler
-  http = make_server('', 8999, WSGIHandler())
-  http.serve_forever()
+def start_json_server_thread():
+  class JSONServer(object):
+    def _thread_body(self):
+      try:
+        from wsgiref.simple_server import make_server
+        from django.core.handlers.wsgi import WSGIHandler
+        import django
+        ver = django.VERSION[:2]
+        if ver >= (1, 7):
+          django.setup() # populate app registry for django >= 1.8
+
+        if ver <= (1, 7):
+          management.call_command('syncdb', interactive=False)
+        else:
+          management.call_command('migrate', interactive=False)
+        try:
+          User.objects.create_user(username='sammeh', email='sam@rf.com', password='password').save()
+        except:
+          pass
+
+        http = make_server('', 8999, WSGIHandler())
+        print('Server made. continue={}'.format(self.continue_serving))
+        self.event.set() # notify parent thread that the server is ready to serve requests
+        while self.continue_serving:
+          print('Waiting for request!')
+          http.handle_request()
+          self.n_requests += 1
+          print('Handled {} requests!'.format(self.n_requests))
+        print('Got server stop! requests={}'.format(self.n_requests))
+        http.server_close()
+        print('Server closed!')
+      except Exception, e:
+        import traceback
+        traceback.print_exc()
+        print('Error startign server: {}'.format(e))
+      finally:
+        if not self.event.is_set():
+          self.event.set()
+
+    def start(self):
+      print('Got server start')
+      self.continue_serving = True
+      self.n_requests = 0
+      self.event = threading.Event()
+      self.t = threading.Thread(target=self._thread_body)
+      self.t.start()
+      self.event.wait()
+      return self
+
+    def stop(self):
+      print('Got stop call')
+      self.continue_serving = False
+      proxy = ServiceProxy('http://127.0.0.1:8999/json/', version=2.0)
+      proxy.jsonrpc.test(string='Hello')[u'result']
+      self.t.join(2.0)
+      return self
+
+  return JSONServer().start()
+
+
+class JSONServerTestCase(unittest.TestCase):
+  def setUp(self):
+    self.host = 'http://127.0.0.1:8999/json/'
 
 @jsonrpc_method('jsonrpc.test')
 def echo(request, string):
@@ -155,26 +214,26 @@ class JSONRPCFunctionalTests(unittest.TestCase):
       except Exception, exc:
         e = exc
       self.assert_(type(e) is sig[1])
-  
+
   def test_validate_args(self):
     sig = 'jsonrpc(String, String) -> String'
     M = jsonrpc_method(sig, validate=True)(lambda r, s1, s2: s1+s2)
     self.assert_(validate_params(M, {'params': ['omg', u'wtf']}) is None)
-    
+
     E = None
     try:
       validate_params(M, {'params': [['omg'], ['wtf']]})
     except Exception, e:
       E = e
     self.assert_(type(E) is InvalidParamsError)
-  
+
   def test_validate_args_any(self):
     sig = 'jsonrpc(s1=Any, s2=Any)'
     M = jsonrpc_method(sig, validate=True)(lambda r, s1, s2: s1+s2)
     self.assert_(validate_params(M, {'params': ['omg', 'wtf']}) is None)
     self.assert_(validate_params(M, {'params': [['omg'], ['wtf']]}) is None)
     self.assert_(validate_params(M, {'params': {'s1': 'omg', 's2': 'wtf'}}) is None)
-  
+
   def test_types(self):
     assert type(u'') == String
     assert type('') == String
@@ -187,23 +246,8 @@ class JSONRPCFunctionalTests(unittest.TestCase):
     assert Any.kind({}) == Object
     assert Any.kind(None) == Nil
 
-proc = None
 
-class ServiceProxyTest(unittest.TestCase):      
-  def setUp(self):
-    global proc
-    if proc is None:
-      proc = subprocess.Popen([sys.executable, 
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test.py'),
-        'serve'])
-      time.sleep(10)
-    self.host = 'http://127.0.0.1:8999/json/'
-
-  def tearDown(self):
-    # self.proc.terminate()
-    # self.proc.wait()
-    pass
-  
+class ServiceProxyTest(JSONServerTestCase):
   def test_positional_args(self):
     proxy = ServiceProxy(self.host)
     self.assert_(proxy.jsonrpc.test('Hello')[u'result'] == 'Hello')
@@ -215,35 +259,24 @@ class ServiceProxyTest(unittest.TestCase):
                                 'pass version="2.0" to use keyword arguments)')
     else:
       self.assert_(False, 'Proxy didnt warn about version mismatch')
-  
-  def test_keyword_args(self):        
+
+  def test_keyword_args(self):
     proxy = ServiceProxy(self.host, version='2.0')
     self.assert_(proxy.jsonrpc.test(string='Hello')[u'result'] == 'Hello')
     self.assert_(proxy.jsonrpc.test('Hello')[u'result'] == 'Hello')
 
 
-class JSONRPCTest(unittest.TestCase):
+class JSONRPCTest(JSONServerTestCase):
   def setUp(self):
-    global proc
-    if proc is None:
-      proc = subprocess.Popen([sys.executable,
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test.py'),
-        'serve'])
-      time.sleep(10)
-    self.host = 'http://127.0.0.1:8999/json/'
+    super(JSONRPCTest, self).setUp()
     self.proxy10 = ServiceProxy(self.host, version='1.0')
     self.proxy20 = ServiceProxy(self.host, version='2.0')
 
-  def tearDown(self):
-    # self.proc.terminate()
-    # self.proc.wait()
-    pass
-  
   def test_10(self):
     self.assertEqual(
-      self.proxy10.jsonrpc.test('this is a string')[u'result'], 
+      self.proxy10.jsonrpc.test('this is a string')[u'result'],
       u'this is a string')
-  
+
   def test_11(self):
     req = {
       u'version': u'1.1',
@@ -254,15 +287,15 @@ class JSONRPCTest(unittest.TestCase):
     resp = _call(self.host, req)
     self.assertEquals(resp[u'id'], req[u'id'])
     self.assertEquals(resp[u'result'], req[u'params'][0])
-  
+
   def test_10_notify(self):
     pass
-  
+
   def test_11_positional_mixed_args(self):
     req = {
       u'version': u'1.1',
       u'method': u'jsonrpc.strangeEcho',
-      u'params': {u'1': u'this is a string', u'2': u'this is omg', 
+      u'params': {u'1': u'this is a string', u'2': u'this is omg',
                   u'wtf': u'pants', u'nowai': 'nopants'},
       u'id': u'toostrange'
     }
@@ -271,15 +304,15 @@ class JSONRPCTest(unittest.TestCase):
     self.assertEquals(resp[u'result'][1], u'this is omg')
     self.assertEquals(resp[u'result'][0], u'this is a string')
     self.assert_(u'error' not in resp)
-  
+
   def test_11_GET(self):
     pass
-  
+
   def test_11_GET_unsafe(self):
     pass
-  
+
   def test_11_GET_mixed_args(self):
-    params = {u'1': u'this is a string', u'2': u'this is omg', 
+    params = {u'1': u'this is a string', u'2': u'this is omg',
               u'wtf': u'pants', u'nowai': 'nopants'}
     url = "%s%s?%s" % (
       self.host, 'jsonrpc.strangeSafeEcho',
@@ -290,37 +323,37 @@ class JSONRPCTest(unittest.TestCase):
     self.assertEquals(resp[u'result'][1], u'this is omg')
     self.assertEquals(resp[u'result'][0], u'this is a string')
     self.assert_(u'error' not in resp)
-  
+
   def test_20_checked(self):
     self.assertEqual(
       self.proxy10.jsonrpc.varArgs('o', 'm', 'g')[u'result'],
       ['o', 'm', 'g']
     )
     self.assert_(self.proxy10.jsonrpc.varArgs(1,2,3)[u'error'])
-  
+
   def test_11_service_description(self):
     pass
-  
+
   def test_20_keyword_args(self):
     self.assertEqual(
       self.proxy20.jsonrpc.test(string='this is a string')[u'result'],
       u'this is a string')
-  
+
   def test_20_positional_args(self):
     self.assertEqual(
       self.proxy20.jsonrpc.test('this is a string')[u'result'],
       u'this is a string')
-  
+
   def test_20_notify(self):
     req = {
-      u'jsonrpc': u'2.0', 
-      u'method': u'jsonrpc.notify', 
-      u'params': [u'this is a string'], 
+      u'jsonrpc': u'2.0',
+      u'method': u'jsonrpc.notify',
+      u'params': [u'this is a string'],
       u'id': None
     }
     resp = urllib.urlopen(self.host, dumps(req)).read()
     self.assertEquals(resp, '')
-  
+
   def test_20_batch(self):
     req = [{
       u'jsonrpc': u'2.0',
@@ -333,7 +366,7 @@ class JSONRPCTest(unittest.TestCase):
     for i, D in enumerate(resp):
       self.assertEquals(D[u'result'], req[i][u'params'][0])
       self.assertEquals(D[u'id'], req[i][u'id'])
-  
+
   def test_20_batch_with_errors(self):
     req = [{
       u'jsonrpc': u'2.0',
@@ -352,19 +385,19 @@ class JSONRPCTest(unittest.TestCase):
         self.assert_(u'result' not in D)
         self.assert_(u'error' in D)
         self.assertEquals(D[u'error'][u'code'], 500)
-  
+
   def test_authenticated_ok(self):
     self.assertEquals(
       self.proxy10.jsonrpc.testAuth(
         'sammeh', 'password', u'this is a string')[u'result'],
       u'this is a string')
-  
+
   def test_authenticated_ok_kwargs(self):
     self.assertEquals(
       self.proxy20.jsonrpc.testAuth(
         username='sammeh', password='password', string=u'this is a string')[u'result'],
       u'this is a string')
-  
+
   def test_authenticated_fail_kwargs(self):
     try:
       self.proxy20.jsonrpc.testAuth(
@@ -373,7 +406,7 @@ class JSONRPCTest(unittest.TestCase):
       self.assertEquals(e.args[1], 401)
     else:
       self.assert_(False, 'Didnt return status code 401 on unauthorized access')
-  
+
   def test_authenticated_fail(self):
     try:
       self.proxy10.jsonrpc.testAuth(
@@ -385,16 +418,14 @@ class JSONRPCTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  if len(sys.argv) > 1 and sys.argv[1].strip() == 'serve':
-    management.call_command('syncdb', interactive=False)
-    try:
-      User.objects.create_user(username='sammeh', email='sam@rf.com', password='password').save()
-    except:
-      pass
-    json_serve_thread()
-  else:
-    unittest.main()
-    if proc is not None:
-      proc.terminate()
-      proc.wait()
-
+  server = None
+  if os.path.exists('test.sqlite3'):
+    os.remove('test.sqlite3')
+  try:
+    server = start_json_server_thread()
+    unittest.main(argv=sys.argv)
+  finally:
+    if server:
+      server.stop()
+    if os.path.exists('test.sqlite3'):
+      os.remove('test.sqlite3')
