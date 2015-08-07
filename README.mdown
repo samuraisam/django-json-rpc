@@ -3,12 +3,13 @@ Django JSON-RPC
 
 ![Travis Build Status](https://travis-ci.org/samuraisam/django-json-rpc.svg?branch=master)
 
-A basic JSON-RPC Implementation for your Django-powered sites. 
+A basic JSON-RPC Implementation for your Django-powered sites.
 
 Features:
 <ul>
   <li>Simple, pythonic API</li>
   <li>Support for Django authentication</li>
+  <li>Support for all official [Django/Python Version](https://docs.djangoproject.com/en/1.8/faq/install/#what-python-version-can-i-use-with-django) combinations</li>
   <li>Supports JSON-RPC 1.0, 1.1, 1.2 and 2.0 Spec</li>
   <li>Proxy to test your JSON Service</li>
   <li>Run-time type checking</li>
@@ -19,25 +20,25 @@ Features:
 The basic API:
 
 **myproj/myapp/views.py**
-    
+
     from jsonrpc import jsonrpc_method
-    
+
     @jsonrpc_method('myapp.sayHello')
     def whats_the_time(request, name='Lester'):
       return "Hello %s" % name
-    
+
     @jsonrpc_method('myapp.gimmeThat', authenticated=True)
     def something_special(request, secret_data):
       return {'sauce': ['authenticated', 'sauce']}
-    
-    
+
+
 **myproj/urls.py**
 
     from django.conf.urls.defaults import *
     from jsonrpc import jsonrpc_site
     import myproj.myapp.views # you must import the views that need connected
-    
-    urlpatterns = patterns('', 
+
+    urlpatterns = patterns('',
       url(r'^json/browse/', 'jsonrpc.views.browse', name="jsonrpc_browser"), # for the graphical browser/web console only, omissible
       url(r'^json/', jsonrpc_site.dispatch, name="jsonrpc_mountpoint"),
       (r'^json/(?P<method>[a-zA-Z0-9.]+)$', jsonrpc_site.dispatch) # for HTTP GET only, also omissible
@@ -49,12 +50,12 @@ You can test your service using the provided graphical browser and console,
 available at http://YOUR_URL/json/browse/ (if using the url patterns from above) or with the included ServiceProxy:
 
     >>> from jsonrpc.proxy import ServiceProxy
-    
+
     >>> s = ServiceProxy('http://localhost:8080/json/')
-    
+
     >>> s.myapp.sayHello('Sam')
     {u'error': None, u'id': u'jsonrpc', u'result': u'Hello Sam'}
-    
+
     >>> s.myapp.gimmeThat('username', 'password', 'test data')
     {u'error': None, u'id': u'jsonrpc', u'result': {u'sauce': [u'authenticated', u'sauce']}}
 
@@ -70,19 +71,19 @@ Guide
     git clone git://github.com/samuraisam/django-json-rpc.git
     cd django-json-rpc
     python setup.py install
-    
+
     # Add 'jsonrpc' to your INSTALLED_APPS in your settings.py file
 
 #### 2. Write JSON-RPC methods
 
     from jsonrpc import jsonrpc_method
-    
+
     @jsonrpc_method('app.register')
     def register_user(request, username, password):
       u = User.objects.create_user(username, 'internal@app.net', password)
       u.save()
       return u.__dict__
-    
+
     @jsonrpc_method('app.change_password', authenticated=True)
     def change_password(request, new_password):
       request.user.set_password(new_password)
@@ -93,8 +94,8 @@ Guide
 
     from jsonrpc import jsonrpc_site
     import app.views
-    
-    urlpatterns = patterns('', 
+
+    urlpatterns = patterns('',
       url(r'^json/$', jsonrpc_site.dispatch, name='jsonrpc_mountpoint'),
       # ... among your other URLs
     )
@@ -112,9 +113,9 @@ The name of your method. IE: `namespace.methodName`
 </li>
 <li>
 `authenticated=False`
-  
+
 Adds `username` and `password` arguments to the beginning of your method if the user hasn't already been authenticated. These will be used to authenticate the user against `django.contrib.authenticate` If you use HTTP auth or other authentication middleware, `username` and `password` will not be added, and this method will only check against `request.user.is_authenticated`.
-  
+
 You may pass a callablle to replace `django.contrib.auth.authenticate` as the authentication method. It must return either a User or `None` and take the keyword arguments `username` and `password`.
 </li>
 <li>
@@ -126,7 +127,7 @@ Designates whether or not your method may be accessed by HTTP GET. By default th
 `validate=False`
 
 Validates the arguments passed to your method based on type information provided in the signature. Supply type information by including types in your method declaration. Like so:
-      
+
       @jsonrpc_method('myapp.specialSauce(Array, String)', validate=True)
       def special_sauce(self, ingredients, instructions):
         return SpecialSauce(ingredients, instructions)
@@ -137,8 +138,8 @@ Calls to `myapp.specialSauce` will now check each arguments type before calling 
 </li>
 <li>
 `site=default_site`
-    
-Defines which site the jsonrpc method will be added to. Can be any 
+
+Defines which site the jsonrpc method will be added to. Can be any
 object that provides a `register(name, func)` method.
 </li>
 </ul>
@@ -158,16 +159,16 @@ Types can be specified a number of ways, the following are all equivalent:
 
       # using JSON types:
       @jsonrpc_method('app.findSelection(query=Object, limit=Number)')
-      
+
       # using Python types:
       @jsonrpc_method('app.findSelection(query=dict, limit=int)')
-      
+
       # with mixed keyword parameters
       @jsonrpc_method('app.findSelection(dict, limit=int)')
-      
+
       # with no keyword parameters
       @jsonrpc_method('app.findSelection(dict, int)')
-      
+
       # with a return value
       @jsonrpc_method('app.findSelection(dict, int) -> list')
 
@@ -185,7 +186,7 @@ To access the browser simply add another entry to your `urls.py` file, before th
 ### Enabling HTTP-GET
 JSON-RPC 1.1 includes support for methods which are accessible by HTTP GET which it calls idempotent. Add the following to your `urls.py` file to set up the GET URL.
 
-    urlpatterns += patterns('', 
+    urlpatterns += patterns('',
       (r'^json/(?P<method>[a-zA-Z0-9.-_]+)$', jsonrpc_site.dispatch),
     )
 
@@ -211,7 +212,7 @@ Using your own authentication method:
 
     def mah_authenticate(username, password):
       return CustomUserClass.authenticate(username, password)
-    
+
     @jsonrpc_method('app.thupertheecrit', authenticated=mah_authenticate)
     def thupertheecrit(request, value):
       request.user.theecrit = value
@@ -219,4 +220,3 @@ Using your own authentication method:
       return request.user.__dict__
 
 In case authentication is handled before your method is called, like in some middleware, providing `authenticated=True` to the method decorator will only check that `request.user` is authenticated and won't add any parameters to the beginning of your method.
-
