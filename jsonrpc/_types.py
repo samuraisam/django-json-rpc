@@ -36,7 +36,7 @@ class Type(type):
     return False
 
   def __str__(self):
-    return getattr(self, '_name', 'unknown')
+    return "%s(%s)" % (getattr(self, '_name', 'unknown'), getattr(self, 't', None))
 
   def N(self, n):
     self._name = n
@@ -61,11 +61,16 @@ class Type(type):
       lambda L, R: R if (str(R) == n) else L,
       _types_gen(self))
 
+
+str_types = (six.text_type,)
+if six.PY2:
+  str_types += (six.binary_type,)
+
 # JSON primitives and data types
 Object = Type('Object', (object,), {}).I(dict).N('obj')
 Number = Type('Number', (object,), {}).I(*six.integer_types).N('num')
 Boolean = Type('Boolean', (object,), {}).I(bool).N('bit')
-String = Type('String', (object,), {}).I(*((six.text_type,)+six.string_types)).N('str')
+String = Type('String', (object,), {}).I(*str_types).N('str')
 Array = Type('Array', (object,), {}).I(list, set, tuple).N('arr')
 Nil = Type('Nil', (object,), {}).I(type(None)).N('nil')
 Any = Type('Any', (object,), {}).I(

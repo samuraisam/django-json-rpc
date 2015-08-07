@@ -4,7 +4,7 @@ import six
 from inspect import getargspec
 from functools import wraps
 from jsonrpc.site import jsonrpc_site
-from jsonrpc.types import *
+from jsonrpc._types import *
 from jsonrpc.exceptions import *
 
 try:

@@ -3,7 +3,7 @@ from functools import wraps
 from uuid import uuid1
 from jsonrpc._json import loads, dumps
 from jsonrpc.exceptions import *
-from jsonrpc.types import *
+from jsonrpc._types import *
 from django.core import signals
 from django.utils.encoding import smart_text
 empty_dec = lambda f: f

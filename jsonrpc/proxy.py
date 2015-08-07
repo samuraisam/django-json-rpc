@@ -4,7 +4,7 @@ from six.moves.urllib import error as urllib_error
 from django.test.client import FakePayload
 
 from jsonrpc._json import loads, dumps
-from jsonrpc.types import *
+from jsonrpc._types import *
 
 
 class ServiceProxy(object):
@@ -32,7 +32,7 @@ class ServiceProxy(object):
       'method': self.service_name,
       'params': params,
       'id': str(uuid.uuid1())
-    })
+    }).encode('utf-8')
     headers = {
       'Content-Type': 'application/json-rpc',
       'Accept': 'application/json-rpc',
@@ -44,11 +44,11 @@ class ServiceProxy(object):
     except IOError as e:
       if isinstance(e, urllib_error.HTTPError):
         if e.code not in (401, 403) and e.headers['Content-Type'] == 'application/json-rpc':
-          return e.read()  # we got a jsonrpc-formatted respnose
+          return e.read().decode('utf-8')  # we got a jsonrpc-formatted respnose
         raise ServiceProxyException(e.code, e.message, e.headers, req)
       else:
         raise e
-    return resp.read()
+    return resp.read().decode('utf-8')
 
   def __call__(self, *args, **kwargs):
     params = kwargs if len(kwargs) else args
