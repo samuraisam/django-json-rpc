@@ -1,10 +1,6 @@
 import os
 import sys
 import unittest
-try:
-  import subprocess
-except ImportError:
-  import subprocess_ as subprocess
 import time
 import urllib
 import threading
