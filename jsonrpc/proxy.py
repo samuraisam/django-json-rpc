@@ -45,7 +45,7 @@ class ServiceProxy(object):
       if isinstance(e, urllib_error.HTTPError):
         if e.code not in (401, 403) and e.headers['Content-Type'] == 'application/json-rpc':
           return e.read().decode('utf-8')  # we got a jsonrpc-formatted respnose
-        raise ServiceProxyException(e.code, e.message, e.headers, req)
+        raise ServiceProxyException(e.code, e.headers, req)
       else:
         raise e
     return resp.read().decode('utf-8')
@@ -70,10 +70,10 @@ class ServiceProxy(object):
 
 
 class ServiceProxyException(IOError):
-  def __init__(self, code, message, headers, request):
-    self.args = (message, code, headers, request)
+  def __init__(self, code, headers, request):
+    self.args = ('An Error Occurred', code, headers, request)
     self.code = code
-    self.message = message
+    self.message = 'An Error Occurred'
     self.headers = headers
     self.request = request
 

@@ -2,7 +2,6 @@ import re
 import sys
 import six
 from inspect import getargspec
-from functools import wraps
 from jsonrpc.site import jsonrpc_site
 from jsonrpc._types import *
 from jsonrpc.exceptions import *
@@ -192,7 +191,7 @@ def jsonrpc_method(name, authenticated=False,
         from django.contrib.auth.models import User
       else:
         authenticate = authenticated
-      @wraps(func)
+      @six.wraps(func)
       def _func(request, *args, **kwargs):
         user = getattr(request, 'user', None)
         is_authenticated = getattr(user, 'is_authenticated', lambda: False)
@@ -229,7 +228,7 @@ def jsonrpc_method(name, authenticated=False,
     else:
       _func = func
 
-    @wraps(_func)
+    @six.wraps(_func)
     def exc_printer(*a, **kw):
       try:
         return _func(*a, **kw)

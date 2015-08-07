@@ -57,6 +57,7 @@ def validate_params(method, D):
       raise InvalidParamsError('Not enough params provided for %s' % method.json_sig)
     for k in keys:
       if not k in D['params']:
+        print('\n\n\n\nSHITTER SHITTER', k, D, '\n\n\n\n')
         raise InvalidParamsError('%s is not a valid parameter for %s'
                                  % (k, method.json_sig))
       if not Any.kind(D['params'][k]) == method.json_arg_types[k]:
@@ -215,9 +216,9 @@ class JSONRPCSite(object):
       else:
         try:
           if hasattr(request, "body"):
-              D = loads(request.body)
+              D = loads(request.body.decode('utf-8'))
           else:
-              D = loads(request.raw_post_data)
+              D = loads(request.raw_post_data.decode('utf-8'))
         except:
           raise InvalidRequestError
 

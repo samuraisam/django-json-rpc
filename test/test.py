@@ -66,7 +66,7 @@ except ImportError:
 
 
 def _call(host, req):
-  return loads(urllib_request.urlopen(host, dumps(req)).read())
+  return loads(urllib_request.urlopen(host, dumps(req).encode('utf-8')).read().decode('utf-8'))
 
 
 def start_json_server_thread():
@@ -319,9 +319,9 @@ class JSONRPCTest(JSONServerTestCase):
               'wtf': 'pants', 'nowai': 'nopants'}
     url = "%s%s?%s" % (
       self.host, 'jsonrpc.strangeSafeEcho',
-      (''.join(['%s=%s&' % (k, urllib_parse.quote(v)) for k, v in params.iteritems()])).rstrip('&')
+      (''.join(['%s=%s&' % (k, urllib_parse.quote(v)) for k, v in params.items()])).rstrip('&')
     )
-    resp = loads(urllib_request.urlopen(url).read())
+    resp = loads(urllib_request.urlopen(url).read().decode('utf-8'))
     self.assertEquals(resp['result'][-1], 'Default')
     self.assertEquals(resp['result'][1], 'this is omg')
     self.assertEquals(resp['result'][0], 'this is a string')
@@ -354,7 +354,7 @@ class JSONRPCTest(JSONServerTestCase):
       'params': ['this is a string'],
       'id': None
     }
-    resp = urllib_request.urlopen(self.host, dumps(req)).read()
+    resp = urllib_request.urlopen(self.host, dumps(req).encode('utf-8')).read().decode('utf-8')
     self.assertEquals(resp, '')
 
   def test_20_batch(self):
@@ -364,7 +364,7 @@ class JSONRPCTest(JSONServerTestCase):
       'params': ['this is a string'],
       'id': 'id-'+str(i)
     } for i in range(5)]
-    resp = loads(urllib_request.urlopen(self.host, dumps(req)).read())
+    resp = loads(urllib_request.urlopen(self.host, dumps(req).encode('utf-8')).read().decode('utf-8'))
     self.assertEquals(len(resp), len(req))
     for i, D in enumerate(resp):
       self.assertEquals(D['result'], req[i]['params'][0])
@@ -377,7 +377,7 @@ class JSONRPCTest(JSONServerTestCase):
       'params': ['this is a string'],
       'id': 'id-'+str(i)
     } for i in range(10)]
-    resp = loads(urllib_request.urlopen(self.host, dumps(req)).read())
+    resp = loads(urllib_request.urlopen(self.host, dumps(req).encode('utf-8')).read().decode('utf-8'))
     self.assertEquals(len(resp), len(req))
     for i, D in enumerate(resp):
       if not i % 2:

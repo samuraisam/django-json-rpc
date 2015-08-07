@@ -1,6 +1,7 @@
 import six
 from functools import reduce
 
+
 def _types_gen(T):
   yield T
   if hasattr(T, 't'):
@@ -9,6 +10,10 @@ def _types_gen(T):
       if hasattr(l, 't'):
         for ll in _types_gen(l):
           yield ll
+
+
+def _basetypes(T):
+  return [t for t in _types_gen(T) if not isinstance(t, Type)]
 
 
 class Type(type):
@@ -27,12 +32,19 @@ class Type(type):
     type.__init__(self, *args, **kwargs)
 
   def __eq__(self, other):
-    for T in _types_gen(self):
-      if isinstance(other, Type):
-        if T in other.t:
+    if six.PY2:
+      for T in _types_gen(self):
+        if isinstance(other, Type):
+          if T in other.t:
+            return True
+        if type.__eq__(T, other):
           return True
-      if type.__eq__(T, other):
-        return True
+    elif six.PY3:
+      for T in _types_gen(self):
+        if isinstance(other, Type) and T in other.t:
+          return True
+        elif other in _basetypes(T):
+          return True
     return False
 
   def __str__(self):
