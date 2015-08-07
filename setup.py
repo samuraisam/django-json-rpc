@@ -29,5 +29,5 @@ setup(
     'Topic :: Software Development :: Libraries :: Python Modules'],
   packages=['jsonrpc'],
   zip_safe = False, # we include templates and tests
-  install_requires=['Django>=1.0'],
+  install_requires=['Django>=1.0', 'six'],
   package_data={'jsonrpc': ['templates/*']})
