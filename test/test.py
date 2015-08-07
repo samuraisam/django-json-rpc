@@ -91,20 +91,20 @@ def start_json_server_thread():
           pass
 
         http = make_server('', 8999, WSGIHandler())
-        print('Server made. continue={}'.format(self.continue_serving))
+        print('Server made. continue={0}'.format(self.continue_serving))
         self.event.set() # notify parent thread that the server is ready to serve requests
         while self.continue_serving:
           print('Waiting for request!')
           http.handle_request()
           self.n_requests += 1
-          print('Handled {} requests!'.format(self.n_requests))
-        print('Got server stop! requests={}'.format(self.n_requests))
+          print('Handled {0} requests!'.format(self.n_requests))
+        print('Got server stop! requests={0}'.format(self.n_requests))
         http.server_close()
         print('Server closed!')
       except Exception, e:
         import traceback
         traceback.print_exc()
-        print('Error startign server: {}'.format(e))
+        print('Error startign server: {0}'.format(e))
       finally:
         if not self.event.is_set():
           self.event.set()
@@ -122,8 +122,11 @@ def start_json_server_thread():
     def stop(self):
       print('Got stop call')
       self.continue_serving = False
-      proxy = ServiceProxy('http://127.0.0.1:8999/json/', version=2.0)
-      proxy.jsonrpc.test(string='Hello')[u'result']
+      try:
+        proxy = ServiceProxy('http://127.0.0.1:8999/json/', version=2.0)
+        proxy.jsonrpc.test(string='Hello')[u'result']
+      except: # doesnt matter if this fails
+        pass
       self.t.join(2.0)
       return self
 
