@@ -1,7 +1,7 @@
 Django JSON-RPC
 ===============
 
-![Travis Build Status](https://travis-ci.org/samuraisam/django-json-rpc.svg?branch=master)
+![Travis Build Status](https://travis-ci.org/samuraisam/django-json-rpc.svg?branch=master) [![PyPI version](https://badge.fury.io/py/django-json-rpc.svg)](http://badge.fury.io/py/django-json-rpc)
 
 A basic JSON-RPC Implementation for your Django-powered sites.
 
