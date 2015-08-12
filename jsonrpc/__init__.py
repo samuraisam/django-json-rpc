@@ -43,16 +43,16 @@ def _validate_arg(value, expected):
 
 def _eval_arg_type(arg_type, T=Any, arg=None, sig=None):
     """
-  Returns a type from a snippet of python source. Should normally be
-  something just like 'str' or 'Object'.
+    Returns a type from a snippet of python source. Should normally be
+    something just like 'str' or 'Object'.
 
-    arg_type      the source to be evaluated
-    T             the default type
-    arg           context of where this type was extracted
-    sig           context from where the arg was extracted
+      arg_type      the source to be evaluated
+      T             the default type
+      arg           context of where this type was extracted
+      sig           context from where the arg was extracted
 
-  Returns a type or a Type
-  """
+    Returns a type or a Type
+    """
     try:
         T = eval(arg_type)
     except Exception as e:
@@ -68,16 +68,16 @@ def _eval_arg_type(arg_type, T=Any, arg=None, sig=None):
 
 def _parse_sig(sig, arg_names, validate=False):
     """
-  Parses signatures into a ``OrderedDict`` of paramName => type.
-  Numerically-indexed arguments that do not correspond to an argument
-  name in python (ie: it takes a variable number of arguments) will be
-  keyed as the stringified version of it's index.
+    Parses signatures into a ``OrderedDict`` of paramName => type.
+    Numerically-indexed arguments that do not correspond to an argument
+    name in python (ie: it takes a variable number of arguments) will be
+    keyed as the stringified version of it's index.
 
-    sig         the signature to be parsed
-    arg_names   a list of argument names extracted from python source
+      sig         the signature to be parsed
+      arg_names   a list of argument names extracted from python source
 
-  Returns a tuple of (method name, types dict, return type)
-  """
+    Returns a tuple of (method name, types dict, return type)
+    """
     d = SIG_RE.match(sig)
     if not d:
         raise ValueError('Invalid method signature %s' % sig)
@@ -119,15 +119,15 @@ def _parse_sig(sig, arg_names, validate=False):
 
 def _inject_args(sig, types):
     """
-  A function to inject arguments manually into a method signature before
-  it's been parsed. If using keyword arguments use 'kw=type' instead in
-  the types array.
+    A function to inject arguments manually into a method signature before
+    it's been parsed. If using keyword arguments use 'kw=type' instead in
+    the types array.
 
-    sig     the string signature
-    types   a list of types to be inserted
+      sig     the string signature
+      types   a list of types to be inserted
 
-  Returns the altered signature.
-  """
+    Returns the altered signature.
+    """
     if '(' in sig:
         parts = sig.split('(')
         sig = '%s(%s%s%s' % (
@@ -145,55 +145,55 @@ def jsonrpc_method(name,
                    validate=False,
                    site=default_site):
     """
-  Wraps a function turns it into a json-rpc method. Adds several attributes
-  to the function specific to the JSON-RPC machinery and adds it to the default
-  jsonrpc_site if one isn't provided. You must import the module containing
-  these functions in your urls.py.
+    Wraps a function turns it into a json-rpc method. Adds several attributes
+    to the function specific to the JSON-RPC machinery and adds it to the default
+    jsonrpc_site if one isn't provided. You must import the module containing
+    these functions in your urls.py.
 
-    name
+        name
 
-        The name of your method. IE: `namespace.methodName` The method name
-        can include type information, like `ns.method(String, Array) -> Nil`.
+            The name of your method. IE: `namespace.methodName` The method name
+            can include type information, like `ns.method(String, Array) -> Nil`.
 
-    authenticated=False
+        authenticated=False
 
-        Adds `username` and `password` arguments to the beginning of your
-        method if the user hasn't already been authenticated. These will
-        be used to authenticate the user against `django.contrib.authenticate`
-        If you use HTTP auth or other authentication middleware, `username`
-        and `password` will not be added, and this method will only check
-        against `request.user.is_authenticated`.
+            Adds `username` and `password` arguments to the beginning of your
+            method if the user hasn't already been authenticated. These will
+            be used to authenticate the user against `django.contrib.authenticate`
+            If you use HTTP auth or other authentication middleware, `username`
+            and `password` will not be added, and this method will only check
+            against `request.user.is_authenticated`.
 
-        You may pass a callable to replace `django.contrib.auth.authenticate`
-        as the authentication method. It must return either a User or `None`
-        and take the keyword arguments `username` and `password`.
+            You may pass a callable to replace `django.contrib.auth.authenticate`
+            as the authentication method. It must return either a User or `None`
+            and take the keyword arguments `username` and `password`.
 
-    safe=False
+        safe=False
 
-        Designates whether or not your method may be accessed by HTTP GET.
-        By default this is turned off.
+            Designates whether or not your method may be accessed by HTTP GET.
+            By default this is turned off.
 
-    validate=False
+        validate=False
 
-        Validates the arguments passed to your method based on type
-        information provided in the signature. Supply type information by
-        including types in your method declaration. Like so:
+            Validates the arguments passed to your method based on type
+            information provided in the signature. Supply type information by
+            including types in your method declaration. Like so:
 
-        @jsonrpc_method('myapp.specialSauce(Array, String)', validate=True)
-        def special_sauce(self, ingredients, instructions):
-          return SpecialSauce(ingredients, instructions)
+            @jsonrpc_method('myapp.specialSauce(Array, String)', validate=True)
+            def special_sauce(self, ingredients, instructions):
+              return SpecialSauce(ingredients, instructions)
 
-        Calls to `myapp.specialSauce` will now check each arguments type
-        before calling `special_sauce`, throwing an `InvalidParamsError`
-        when it encounters a discrepancy. This can significantly reduce the
-        amount of code required to write JSON-RPC services.
+            Calls to `myapp.specialSauce` will now check each arguments type
+            before calling `special_sauce`, throwing an `InvalidParamsError`
+            when it encounters a discrepancy. This can significantly reduce the
+            amount of code required to write JSON-RPC services.
 
-    site=default_site
+        site=default_site
 
-        Defines which site the jsonrpc method will be added to. Can be any
-        object that provides a `register(name, func)` method.
+            Defines which site the jsonrpc method will be added to. Can be any
+            object that provides a `register(name, func)` method.
 
-  """
+    """
 
     def decorator(func):
         arg_names = getargspec(func)[0][1:]
