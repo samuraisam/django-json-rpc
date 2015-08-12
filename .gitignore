@@ -23,3 +23,4 @@ dist/*
 django_json_rpc.egg-info/*
 *.DS_Store
 .tox
+.env
