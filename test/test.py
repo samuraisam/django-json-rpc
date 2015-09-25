@@ -48,9 +48,10 @@ if hasattr(django, 'setup'):
   django.setup()
 
 from django.core import management
+from django.test import Client
 from django.contrib.auth.models import User
 from jsonrpc import jsonrpc_method, _parse_sig, Any
-from jsonrpc.proxy import ServiceProxy
+from jsonrpc.proxy import ServiceProxy, TestingServiceProxy
 from jsonrpc._json import loads, dumps
 from jsonrpc.site import validate_params
 from jsonrpc.exceptions import *
@@ -267,6 +268,12 @@ class ServiceProxyTest(JSONServerTestCase):
 
   def test_keyword_args(self):
     proxy = ServiceProxy(self.host, version='2.0')
+    self.assert_(proxy.jsonrpc.test(string='Hello')['result'] == 'Hello')
+    self.assert_(proxy.jsonrpc.test('Hello')['result'] == 'Hello')
+
+  def test_testing_proxy(self):
+    client = Client()
+    proxy = TestingServiceProxy(client, self.host, version='2.0')
     self.assert_(proxy.jsonrpc.test(string='Hello')['result'] == 'Hello')
     self.assert_(proxy.jsonrpc.test('Hello')['result'] == 'Hello')
 
