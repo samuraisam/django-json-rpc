@@ -100,4 +100,4 @@ class TestingServiceProxy(ServiceProxy):
             'CONTENT_LENGTH': len(json_data)
         }
         response = self.client.post(self.service_url, **client_args)
-        return response.content
+        return response.content.decode('utf-8')
