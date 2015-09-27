@@ -428,6 +428,27 @@ class JSONRPCTest(JSONServerTestCase):
     else:
       self.assert_(False, 'Didnt return status code 401 on unauthorized access')
 
+  def test_authenticated_insufficient_kwargs(self):
+    """
+    Test method with required authentication with insufficient keyword arguments.
+    """
+
+    resp = self.proxy20.jsonrpc.testAuth(string='this is a string')
+
+    # Expected: InvalidParamsError (code -32602)
+    self.assert_('result' not in resp)
+    self.assertEquals(resp['error']['code'], -32602)
+
+  def test_authenticated_insufficient_args(self):
+    """
+    Test method with required authentication with insufficient arguments.
+    """
+    resp = self.proxy10.jsonrpc.testAuth('this is a string')
+
+    # Expected: InvalidParamsError (code -32602)
+    self.assertEquals(resp['result'], None)
+    self.assertEquals(resp['error']['code'], -32602)
+
 
 if __name__ == '__main__':
   server = None
