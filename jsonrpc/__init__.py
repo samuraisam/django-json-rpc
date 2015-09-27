@@ -233,8 +233,8 @@ def jsonrpc_method(name,
                         except KeyError:
                             raise InvalidParamsError(
                                 'Authenticated methods require at least '
-                                '[%s] or {%s} arguments',
-                                authentication_arguments)
+                                '[%(arguments)s] or {%(arguments)s} arguments' %
+                                {'arguments': ', '.join(authentication_arguments)})
 
                         user = _authenticate(**auth_kwargs)
                         if user is not None:
