@@ -202,8 +202,6 @@ class JSONRPCSite(object):
             status = 200
 
         except Error as e:
-            signals.got_request_exception.send(sender=self.__class__,
-                                               request=request)
             response['error'] = e.json_rpc_format
             if version in ('1.1', '2.0') and 'result' in response:
                 response.pop('result')
@@ -272,8 +270,6 @@ class JSONRPCSite(object):
 
             json_rpc = dumps(response, cls=json_encoder)
         except Error as e:
-            signals.got_request_exception.send(sender=self.__class__,
-                                               request=request)
             response['error'] = e.json_rpc_format
             status = e.status
             json_rpc = dumps(response, cls=json_encoder)
