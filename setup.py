@@ -11,7 +11,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 setup(
     name="django-json-rpc",
-    version="0.7.1",
+    version="0.7.2",
     description="A simple JSON-RPC implementation for Django",
     long_description=open(os.path.join('README.mdown')).read(),
     author="Samuel Sutch",
