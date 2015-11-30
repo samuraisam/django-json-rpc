@@ -293,7 +293,7 @@ class JSONRPCSite(object):
             'idempotent': M.json_safe,
             'params': [{'type': str(Any.kind(t)),
                         'name': k} for k, t in M.json_arg_types.items()],
-            'return': {'type': M.json_return_type}
+            'return': {'type': str(M.json_return_type)}
         }
 
     def service_desc(self):
