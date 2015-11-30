@@ -4,6 +4,7 @@ from uuid import uuid1
 from jsonrpc._json import loads, dumps
 from jsonrpc.exceptions import *
 from jsonrpc._types import *
+from django.conf import settings
 from django.core import signals
 from django.utils.encoding import smart_text
 empty_dec = lambda f: f
@@ -211,7 +212,13 @@ class JSONRPCSite(object):
             # exception missed by others
             signals.got_request_exception.send(sender=self.__class__,
                                                request=request)
-            other_error = OtherError(e)
+
+            # Put stacktrace into the OtherError only if DEBUG is enabled
+            if settings.DEBUG:
+                other_error = OtherError(e)
+            else:
+                other_error = OtherError("Internal Server Error")
+
             response['error'] = other_error.json_rpc_format
             status = other_error.status
             if version in ('1.1', '2.0') and 'result' in response:
@@ -274,7 +281,13 @@ class JSONRPCSite(object):
             # exception missed by others
             signals.got_request_exception.send(sender=self.__class__,
                                                request=request)
-            other_error = OtherError(e)
+
+            # Put stacktrace into the OtherError only if DEBUG is enabled
+            if settings.DEBUG:
+                other_error = OtherError(e)
+            else:
+                other_error = OtherError("Internal Server Error")
+
             response['result'] = None
             response['error'] = other_error.json_rpc_format
             status = other_error.status
