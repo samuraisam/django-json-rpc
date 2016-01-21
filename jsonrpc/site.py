@@ -215,10 +215,13 @@ class JSONRPCSite(object):
             if 'id' not in D or ('id' in D and D['id'] is None):  # notification
                 return None, 204
 
+            if isinstance(R, tuple):
+                R = list(R)
+
             encoder = json_encoder()
             builtin_types = (dict, list, set, NoneType, bool, six.text_type
                        ) + six.integer_types + six.string_types
-            if not sum([isinstance(R, e) for e in builtin_types]):
+            if all(not isinstance(R, e) for e in builtin_types):
                 try:
                     rs = encoder.default(R)  # ...or something this thing supports
                 except TypeError as exc:
