@@ -186,6 +186,10 @@ def authCheckedEcho(request, obj1, arr1):
 def checkedVarArgsEcho(request, *args, **kw):
   return list(args) + list(kw.values())
 
+@jsonrpc_method('jsonrpc.tuple() -> Array', validate=True)
+def returnTuple(request):
+    return 1, 0
+
 
 class JSONRPCFunctionalTests(unittest.TestCase):
   def test_method_parser(self):
@@ -448,6 +452,16 @@ class JSONRPCTest(JSONServerTestCase):
     # Expected: InvalidParamsError (code -32602)
     self.assertEquals(resp['result'], None)
     self.assertEquals(resp['error']['code'], -32602)
+
+  def test_return_tuple_10(self):
+    resp = self.proxy10.jsonrpc.tuple()
+
+    self.assertEqual(resp['result'], [1, 0])
+
+  def test_return_tuple_20(self):
+    resp = self.proxy20.jsonrpc.tuple()
+
+    self.assertEqual(resp['result'], [1, 0])
 
 
 if __name__ == '__main__':
